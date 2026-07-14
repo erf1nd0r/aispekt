@@ -1,0 +1,13 @@
+{
+  "name": "aispekt",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./dist"
+  },
+  "routes": [
+    {
+      "pattern": "aispekt.erfindor.com",
+      "custom_domain": true
+    }
+  ]
+}

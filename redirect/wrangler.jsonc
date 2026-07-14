@@ -1,0 +1,11 @@
+{
+  "name": "prune",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-01",
+  "routes": [
+    {
+      "pattern": "prune.erfindor.com",
+      "custom_domain": true
+    }
+  ]
+}

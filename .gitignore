@@ -1,0 +1,8 @@
+node_modules/
+dist/
+test/fixtures/repo/
+test/fixtures/symlink-repo/
+ISA.md
+ISA.html
+dist-cli/
+*.tgz

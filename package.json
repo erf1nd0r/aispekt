@@ -1,0 +1,50 @@
+{
+  "name": "aispekt",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "cli": "bun src/cli.ts",
+    "deploy": "bun test && bun run build && bunx wrangler deploy",
+    "build:cli": "bun build src/cli.ts --target=node --outfile dist-cli/cli.js --banner '#!/usr/bin/env node'",
+    "prepublishOnly": "bun test && bun run typecheck && bun run build:cli"
+  },
+  "devDependencies": {
+    "bun-types": "^1.3.14",
+    "fast-check": "^3.19.0",
+    "typescript": "^5.5.0",
+    "vite": "^6.0.0"
+  },
+  "bin": {
+    "aispekt": "./dist-cli/cli.js"
+  },
+  "description": "Evidence-cited analyzer for AGENTS.md / CLAUDE.md agent instruction files: score, findings, and what to cut - every rule backed by a research citation.",
+  "keywords": [
+    "agents.md",
+    "claude.md",
+    "ai-agents",
+    "linter",
+    "claude-code",
+    "codex",
+    "context-engineering",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erf1nd0r/aispekt.git"
+  },
+  "homepage": "https://aispekt.erfindor.com",
+  "files": [
+    "dist-cli/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
