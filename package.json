@@ -20,7 +20,7 @@
     "vite": "^6.0.0"
   },
   "bin": {
-    "aispekt": "./dist-cli/cli.js"
+    "aispekt": "dist-cli/cli.js"
   },
   "description": "Evidence-cited analyzer for AGENTS.md / CLAUDE.md agent instruction files: score, findings, and what to cut - every rule backed by a research citation.",
   "keywords": [
