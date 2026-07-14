@@ -40,7 +40,7 @@ app.innerHTML = `
 
     <footer>
       <span>rulepack v${rulepack.version} · evidence verified ${rulepack.updated} · ${rulepack.rules.length} rules</span>
-      <span>analysis is deterministic and local — <a href="https://agents.md" rel="noopener">agents.md</a></span>
+      <span>analysis is deterministic and local · <a href="https://www.npmjs.com/package/aispekt" rel="noopener">npm</a> · <a href="https://github.com/erf1nd0r/aispekt" rel="noopener">github</a> · <code>bunx aispekt &lt;repo&gt;</code></span>
     </footer>
   </div>
 `;
