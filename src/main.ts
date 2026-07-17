@@ -32,6 +32,17 @@ document.getElementById("rules-list")!.innerHTML = rules
 document.getElementById("footer-pack")!.textContent =
   `rulepack v${pack.version} · evidence verified ${pack.updated} · ${rules.length} rules`;
 
+// ---- rules table starts collapsed (playground stays close); anything that
+// ---- needs the table visible — tier filter, #rules deep link — opens it ----
+
+const rulesDetails = document.getElementById("rules-details") as HTMLDetailsElement;
+document.getElementById("rules-summary")!.textContent = `Show all ${rules.length} rules`;
+const openRulesOnHash = () => {
+  if (location.hash === "#rules") rulesDetails.open = true;
+};
+openRulesOnHash();
+window.addEventListener("hashchange", openRulesOnHash);
+
 // ---- confidence ladder: ranked tier legend that filters the rules ----
 
 const TIER_ORDER = ["measured", "official", "community", "heuristic"] as const;
@@ -50,6 +61,7 @@ ladder.addEventListener("click", (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".ladder-step");
   if (!btn) return;
   activeTier = activeTier === btn.dataset["tier"] ? null : (btn.dataset["tier"] ?? null);
+  if (activeTier !== null) rulesDetails.open = true;
   for (const b of ladder.querySelectorAll<HTMLButtonElement>(".ladder-step")) {
     b.setAttribute("aria-pressed", String(b.dataset["tier"] === activeTier));
   }

@@ -150,6 +150,13 @@ table.flags { margin-top: 12px; border-collapse: collapse; }
 table.flags td { padding: 6px 18px 6px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 table.flags tr:last-child td { border-bottom: none; }
 .privacy-inline { color: var(--accent); }
+#rules-details { margin-top: 12px; }
+#rules-details > summary {
+  cursor: pointer; font-size: 0.9rem; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px;
+  user-select: none;
+}
+#rules-details > summary:hover { border-color: var(--accent); color: var(--ink); }
 #rules-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
 .rule-row {
   background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--info);

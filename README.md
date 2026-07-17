@@ -1,18 +1,22 @@
 # 🔍 aispekt
 
+[![npm](https://img.shields.io/npm/v/aispekt)](https://www.npmjs.com/package/aispekt)
+[![CI](https://github.com/erf1nd0r/aispekt/actions/workflows/ci.yml/badge.svg)](https://github.com/erf1nd0r/aispekt/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Is your AGENTS.md / CLAUDE.md helping your coding agent — or silently taxing it?**
 
-aispekt is a fast CLI (single native Rust binary, ~1.4 MB, ~20 ms per repo) that scores your agent instruction file and gives evidence-cited recommendations: what to cut, what to fix, and the study or official doc behind every finding.
+aispekt scores your agent instruction file against published evidence and tells you what to cut, what to fix, and *why* — with the study or official doc behind every finding. It's a single native binary (Rust, ~1.4 MB, no runtime); a full repo analysis takes about 20 ms.
 
-```
+```sh
 bunx aispekt .          # or: npx aispekt .
 ```
 
-Docs + browser playground: **https://aispekt.erfindor.com**
+Prefer not to install anything? The **[browser playground](https://aispekt.erfindor.com)** runs the same engine compiled to WebAssembly, entirely client-side — nothing is uploaded, ever.
 
 ## Install
 
-```
+```sh
 # npm / bun (prebuilt binary via platform packages)
 npm install -g aispekt
 
@@ -20,7 +24,7 @@ npm install -g aispekt
 cargo install --locked --git https://github.com/erf1nd0r/aispekt aispekt
 ```
 
-Prebuilt binaries for macOS/Linux/Windows are attached to [GitHub releases](https://github.com/erf1nd0r/aispekt/releases).
+Prebuilt binaries for macOS, Linux, and Windows are attached to [GitHub releases](https://github.com/erf1nd0r/aispekt/releases).
 
 ## Usage
 
@@ -28,15 +32,67 @@ Prebuilt binaries for macOS/Linux/Windows are attached to [GitHub releases](http
 aispekt <file-or-dir> [--json] [--min <score>]
 ```
 
-Point it at a single file, or at a repo directory to unlock **repo-aware checks**: dead commands vs `package.json`, stale paths, README redundancy, missing CLAUDE.md ↔ AGENTS.md bridge, unresolved `@`-imports.
+Point it at a single `CLAUDE.md`/`AGENTS.md` — or at a repo directory to unlock **repo-aware checks**: dead commands the file references but `package.json` doesn't define, paths that don't exist, lines that just restate the README, unresolved `@`-imports, and a missing CLAUDE.md ↔ AGENTS.md bridge.
 
-Exit codes: 0 when score ≥ min (default 60), 1 below, 2 on usage/IO errors — drop it into CI or a pre-commit hook:
+| Flag | Meaning |
+|---|---|
+| `--json` | machine-readable report on stdout |
+| `--min <score>` | pass/fail threshold (default 60) |
+| `--version` | print version |
+
+### What a report looks like
+
+Real output from `aispekt vague.md` (trimmed):
 
 ```
+aispekt — vague.md (file mode)
+76/100 (B)  ·  7 lines · ~48 tokens loaded every session · rulepack v1.0.1
+
+  ERROR L   1  No runnable commands [measured]
+        No runnable command found anywhere in the file.
+        > # Guidelines
+        fix: Add a commands section first: exact build, test, and lint
+             invocations with flags, in backticks.
+        evidence: https://arxiv.org/abs/2602.11988
+
+  WARN  L   3  Vague / aspirational rule [official]
+        Vague phrase "write clean code" — nothing testable for the agent.
+        > Write clean code and follow best practices.
+        fix: Replace with a concrete, verifiable instruction (exact command,
+             path, or example) or delete the line.
+        evidence: https://code.claude.com/docs/en/best-practices
+
+  … 3 more findings …
+
+  Claude Code:  Injects CLAUDE.md as an advisory user message (no compliance
+                guarantee); official size target is under 200 lines.
+  OpenAI Codex: Reads AGENTS.md natively (nearest file wins, 32 KiB cap).
+  …
+```
+
+Every finding names the line, quotes it, proposes a concrete fix, and links its evidence.
+
+### In CI
+
+Exit codes: `0` when score ≥ min · `1` below min · `2` on usage/IO errors — drop it into CI or a pre-commit hook:
+
+```sh
+# fail the build when the instruction file degrades
 bunx aispekt . --min 75
 ```
 
-## Why subtractive?
+### Suppressing a finding
+
+Heuristics have edges. Add an `aispekt-ignore` marker on the flagged line or the line above to suppress it — like `eslint-disable-next-line`:
+
+```markdown
+<!-- aispekt-ignore -->
+- Release tags look like `shopnavigation/mainnavigationpath/1.2.3`
+```
+
+(Version-suffixed identifiers like git tags are already skipped automatically. The legacy `prune-ignore` marker also works.)
+
+## Why penalty-only scoring?
 
 The 2026 evidence flipped the old "write a thorough agents file" advice:
 
@@ -44,54 +100,15 @@ The 2026 evidence flipped the old "write a thorough agents file" advice:
 - File *structure* (length, position, architecture) showed **no measurable effect** on compliance in a 1,650-session factorial study ([arXiv:2605.10039](https://arxiv.org/abs/2605.10039)) — content correctness is what matters.
 - The documented failure modes are subtractive: Lint Leakage (62% of files), Context Bloat (42%), Skill Leakage (35%) ([arXiv:2606.15828](https://arxiv.org/abs/2606.15828)).
 
-So aispekt scores by **penalty only** — it never rewards padding, and a lean 30-line file with exact commands and real gotchas scores 100.
+So aispekt scores by **penalty only** — you start at 100 and lose points for content the evidence says hurts. It never rewards padding, and a lean 30-line file with exact commands and real gotchas scores 100.
 
-## How it stays current (the rulepack)
+## Every rule cites its evidence
 
-The ecosystem moves fast; hardcoded rules rot. aispekt separates the **engine** (check implementations, Rust) from the **rulepack** (`rules/rulepack.json`) — the versioned data that carries each rule's weight, severity, confidence tier, and citation:
+The rules live in a versioned data file, [`rules/rulepack.json`](rules/rulepack.json), separate from the engine — each rule carries its weight, severity, confidence tier, and citation. Every finding in the CLI and playground links its evidence and shows its tier (`measured` > `official` > `community` > `heuristic`). Rules the studies contradict (like the 200-line size target) are labeled `heuristic` and framed as cost, not fact — honesty is a feature.
 
-```json
-{
-  "id": "directory-tree",
-  "weight": 5,
-  "evidenceTier": "measured",
-  "evidenceUrl": "https://arxiv.org/abs/2602.11988",
-  "lastVerified": "2026-07-14"
-}
-```
+Browse the full rule table, rendered live from the rulepack, at [aispekt.erfindor.com](https://aispekt.erfindor.com#rules).
 
-**Updating the rubric is a data edit, not a code change:**
-
-1. Re-weight / retire / re-cite a rule → edit `rules/rulepack.json`, bump `version` (semver: patch = wording, minor = new rule, major = rule changed/removed), set `lastVerified`.
-2. New rule → add the JSON entry *and* a check implementation; the engine **fails at test time** if pack and implementations disagree in either direction, so drift is impossible to ship.
-3. Every finding in the CLI/playground links its `evidenceUrl` and shows its tier (`measured` > `official` > `community` > `heuristic`). Rules the studies contradict (like the 200-line target) are labeled `heuristic` and framed as cost, not adherence — honesty is a feature.
-4. Re-verify cadence: sweep the evidence URLs (agents.md spec, Anthropic memory/best-practices docs, the arXiv studies) and refresh `lastVerified`; both doc hosts moved in the last year, so follow redirects.
-
-Calibration is regression-tested: known-good and known-bad fixtures pin score bounds, and property tests guarantee scoring stays penalty-only (appending bloat can never raise a score).
-
-## Suppressing a finding
-
-Heuristics have edges. Add an `aispekt-ignore` marker (the legacy `prune-ignore` also works) on the flagged line or the line above to suppress it:
-
-```markdown
-<!-- aispekt-ignore -->
-- Release tags look like `shopnavigation/mainnavigationpath/1.2.3`
-```
-
-(Version-suffixed identifiers like git tags are already skipped automatically.)
-
-## Architecture
-
-```
-crates/core   the engine: 18 checks + scoring, pure and deterministic (Rust)
-crates/cli    the product: `aispekt` binary (filesystem walk, human/JSON output)
-crates/wasm   the same engine compiled to WASM for the docs-site playground
-rules/        rulepack.json — versioned rule data, embedded at compile time
-src/, test/   TypeScript reference engine + web docs/playground frontend
-npm/          npm wrapper package (platform-binary distribution)
-```
-
-The Rust engine is a semantics-preserving port of the original TypeScript engine, held to **byte-identical JSON output** by a golden-corpus parity suite (`crates/cli/tests/golden.rs` against `test/golden/`) — regenerate goldens with `bun src/cli.ts <input> --json` only when a rule deliberately changes. The WASM build is additionally cross-checked against the TS engine in `test/wasm.test.ts`.
+Calibration is regression-tested: known-good and known-bad fixtures pin score bounds, and property tests guarantee scoring stays penalty-only — appending bloat can never raise a score.
 
 ## Roadmap (v2 candidates)
 
@@ -99,19 +116,10 @@ The Rust engine is a semantics-preserving port of the original TypeScript engine
 - Behavioral A/B tier: run an agent on sample tasks with/without the file — the only ground-truth measurement.
 - Rulepack fetched from a registry at runtime (Semgrep-style) instead of bundled.
 
-## Development
+## Contributing
 
-```
-cargo test --workspace      # engine + CLI + golden parity + property tests
-cargo clippy --workspace --all-targets -- -D warnings
+Bug reports and rule-evidence corrections are especially welcome — every rule is only as good as its citation. Development setup, architecture notes, and the rulepack-update process are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-bun install
-bun test                    # TS reference engine + WASM parity
-bun run build               # tsc + wasm build + vite (docs site)
-```
+## License
 
-Zero runtime dependencies in every deliverable: the binary is static, the wasm module is dependency-free, the site ships no JS framework.
-
-## Releasing
-
-Tag `v<version>` (matching `npm/aispekt/package.json`) and push — `.github/workflows/release.yml` cross-builds five targets, publishes the npm wrapper + platform packages, and attaches binaries to the GitHub release. Requires the `NPM_TOKEN` repo secret.
+[MIT](LICENSE)
