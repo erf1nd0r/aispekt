@@ -91,7 +91,9 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           for d in out/aispekt-*; do
-            PKG=$(basename "$d")
+            # dir names stay flat (out/aispekt-<slug>); the real, scoped name
+            # lives in the assembled package.json
+            PKG=$(node -p "require('./$d/package.json').name")
             if npm view "$PKG@$VERSION" version >/dev/null 2>&1; then
               echo "$PKG@$VERSION already on the registry — skipping"
             else

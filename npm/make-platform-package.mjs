@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Assembles one platform npm package (aispekt-<os>-<cpu>) around a built
+// Assembles one platform npm package (@aispekt/<os>-<cpu>) around a built
 // binary. Used by .github/workflows/release.yml; runnable locally:
 //
 //   node npm/make-platform-package.mjs darwin-arm64 target/release/aispekt 0.2.0 out/
@@ -26,7 +26,7 @@ writeFileSync(
   join(pkgDir, "package.json"),
   JSON.stringify(
     {
-      name: `aispekt-${slug}`,
+      name: `@aispekt/${slug}`,
       version,
       description: `aispekt native binary for ${os} ${cpu}`,
       license: "MIT",

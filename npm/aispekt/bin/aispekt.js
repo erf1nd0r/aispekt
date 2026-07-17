@@ -6,11 +6,11 @@
 const { execFileSync } = require("node:child_process");
 
 const PLATFORMS = {
-  "darwin arm64": "aispekt-darwin-arm64",
-  "darwin x64": "aispekt-darwin-x64",
-  "linux x64": "aispekt-linux-x64",
-  "linux arm64": "aispekt-linux-arm64",
-  "win32 x64": "aispekt-win32-x64",
+  "darwin arm64": "@aispekt/darwin-arm64",
+  "darwin x64": "@aispekt/darwin-x64",
+  "linux x64": "@aispekt/linux-x64",
+  "linux arm64": "@aispekt/linux-arm64",
+  "win32 x64": "@aispekt/win32-x64",
 };
 
 const key = `${process.platform} ${process.arch}`;
