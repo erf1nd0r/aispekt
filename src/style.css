@@ -47,7 +47,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
-header.hero { margin-bottom: 20px; max-width: 860px; }
+header.hero { margin-bottom: 20px; }
 .hero h1 {
   font-size: 2.6rem; letter-spacing: -0.03em; font-weight: 600;
   font-family: var(--mono);
@@ -57,7 +57,7 @@ header.hero { margin-bottom: 20px; max-width: 860px; }
 
 /* ---- live-scoring hero ---- */
 .hero-demo {
-  margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1.4fr) 1fr;
+  margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1.7fr) 1fr;
   gap: 18px; border: 1px solid var(--line); border-radius: 12px;
   background: var(--panel); padding: 16px; align-items: center;
 }
@@ -80,9 +80,13 @@ header.hero { margin-bottom: 20px; max-width: 860px; }
 @media (max-width: 640px) { .hero-demo { grid-template-columns: 1fr; } }
 
 /* ---- rail layout (spec-sheet grid at desktop) ---- */
-.layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 36px; }
-.rail { position: sticky; top: 24px; align-self: start; display: flex; flex-direction: column; gap: 22px; }
-.content { min-width: 0; max-width: 860px; }
+.layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 0 36px; }
+.layout > .hero { grid-column: 2; grid-row: 1; }
+.rail {
+  grid-column: 1; grid-row: 1 / 3;
+  position: sticky; top: 24px; align-self: start; display: flex; flex-direction: column; gap: 22px;
+}
+.content { grid-column: 2; grid-row: 2; min-width: 0; max-width: 860px; }
 @media (max-width: 900px) {
   .layout { display: block; }
   .rail { position: static; margin-bottom: 10px; }
