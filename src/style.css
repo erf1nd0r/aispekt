@@ -89,7 +89,8 @@ header.hero { margin-bottom: 20px; }
 .content { grid-column: 2; grid-row: 2; min-width: 0; max-width: 860px; }
 @media (max-width: 900px) {
   .layout { display: block; }
-  .rail { position: static; margin-bottom: 10px; }
+  /* dissolve the rail box so nav.toc can stick against the whole page */
+  .rail { display: contents; }
 }
 
 .tier-ladder { display: flex; flex-direction: column; gap: 6px; }
@@ -123,9 +124,19 @@ nav.toc a {
 nav.toc a:hover { color: var(--accent); border-left-color: var(--accent); }
 nav.toc a.active { color: var(--ink); border-left-color: var(--accent); }
 @media (max-width: 900px) {
-  nav.toc { flex-direction: row; flex-wrap: wrap; gap: 14px; }
-  nav.toc a { border-left: none; padding-left: 0; border-bottom: 2px solid transparent; padding-bottom: 2px; }
+  nav.toc {
+    position: sticky; top: 0; z-index: 10;
+    flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 18px;
+    padding: 12px 20px; margin: 0 -20px 12px;
+    background: var(--bg); border-bottom: 1px solid var(--line);
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  nav.toc::-webkit-scrollbar { display: none; }
+  nav.toc a { border-left: none; padding-left: 0; border-bottom: 2px solid transparent; padding-bottom: 2px; white-space: nowrap; }
   nav.toc a.active, nav.toc a:hover { border-bottom-color: var(--accent); }
+  .tier-ladder { margin-bottom: 12px; }
+  /* anchor jumps must land below the sticky bar */
+  section.doc { scroll-margin-top: 56px; }
 }
 /* hairline spec-sheet rhythm between doc sections */
 section.doc { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line); }
