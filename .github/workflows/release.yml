@@ -19,7 +19,10 @@ jobs:
       matrix:
         include:
           - { os: macos-14, target: aarch64-apple-darwin, slug: darwin-arm64 }
-          - { os: macos-13, target: x86_64-apple-darwin, slug: darwin-x64 }
+          # Intel binary cross-compiled on Apple Silicon — macos-13 (the last
+          # Intel image) is retired and jobs queue forever; the x86_64 test
+          # binaries execute under Rosetta 2, which GitHub's ARM images ship.
+          - { os: macos-15, target: x86_64-apple-darwin, slug: darwin-x64 }
           - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, slug: linux-x64 }
           - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-musl, slug: linux-arm64 }
           - { os: windows-latest, target: x86_64-pc-windows-msvc, slug: win32-x64 }
