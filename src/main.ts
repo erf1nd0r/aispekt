@@ -100,7 +100,7 @@ const HERO_SAMPLE = [
   "Always write clean code and follow best practices.",
   "Use 2 spaces for indentation and single quotes everywhere.",
   "IMPORTANT: YOU MUST be careful. CRITICAL: stay focused.",
-  "IMPORTANT: YOU MUST double-check. CRITICAL: NEVER EVER guess.",
+  "IMPORTANT: YOU MUST double-check. CRITICAL: NEVER guess.",
   "src/",
   "  components/",
   "  utils/",

@@ -145,7 +145,7 @@ section.doc pre code { background: none; padding: 0; }
   background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
 }
 .install-card h3 { font-size: 0.95rem; margin-bottom: 8px; }
-.install-card pre { margin-top: 0; border: none; padding: 0; background: none; }
+.install-card pre { margin-top: 0; border: none; padding: 0; background: none; white-space: pre-wrap; overflow-wrap: anywhere; }
 table.flags { margin-top: 12px; border-collapse: collapse; }
 table.flags td { padding: 6px 18px 6px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 table.flags tr:last-child td { border-bottom: none; }
@@ -309,7 +309,7 @@ button.ghost:hover { border-color: var(--accent); }
    is dashed and unfilled — visually "unverified" */
 .tier {
   font-size: 0.72rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line);
-  color: var(--muted); text-decoration: none; font-weight: 600;
+  color: var(--muted); text-decoration: none; font-weight: 600; white-space: nowrap;
 }
 .tier.measured {
   border-color: var(--tier-measured); color: var(--tier-measured);
