@@ -6,3 +6,7 @@ ISA.md
 ISA.html
 dist-cli/
 *.tgz
+
+# built artifacts
+target/
+public/aispekt.wasm

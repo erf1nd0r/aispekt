@@ -1,0 +1,82 @@
+{
+  "fileName": "CLAUDE.md",
+  "mode": "repo",
+  "score": 88,
+  "grade": "B",
+  "lineCount": 8,
+  "byteSize": 290,
+  "tokenEstimate": 73,
+  "findings": [
+    {
+      "line": 2,
+      "excerpt": "@docs/conventions.md",
+      "message": "@-import \"docs/conventions.md\" does not resolve in the repo.",
+      "ruleId": "import-resolution",
+      "ruleName": "Unresolved @-import",
+      "severity": "error",
+      "recommendation": "Fix the import path or remove the import.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 4,
+      "excerpt": "bun run deploy:prod",
+      "message": "Script \"deploy:prod\" is not in package.json scripts.",
+      "ruleId": "dead-command",
+      "ruleName": "Dead command",
+      "severity": "error",
+      "recommendation": "Fix the command to match package.json scripts, or delete it.",
+      "evidenceUrl": "https://arxiv.org/abs/2602.11988",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 5,
+      "excerpt": "src/worker/legacy/",
+      "message": "Path \"src/worker/legacy\" does not exist in the repo.",
+      "ruleId": "stale-path",
+      "ruleName": "Stale path",
+      "severity": "error",
+      "recommendation": "Update the path or delete the reference.",
+      "evidenceUrl": "https://github.com/giacomo/agents-lint",
+      "evidenceTier": "community"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "dead-command",
+      "count": 1,
+      "penalty": 5
+    },
+    {
+      "ruleId": "stale-path",
+      "count": 1,
+      "penalty": 3
+    },
+    {
+      "ruleId": "import-resolution",
+      "count": 1,
+      "penalty": 4
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects this file as an advisory user message (no compliance guarantee); official size target is under 200 lines. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Reads AGENTS.md natively (nearest file wins, 32 KiB cap — this file is 0.3 KiB). Supports AGENTS.override.md for local tweaks."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

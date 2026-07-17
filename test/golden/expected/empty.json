@@ -1,0 +1,66 @@
+{
+  "fileName": "empty.md",
+  "mode": "file",
+  "score": 82,
+  "grade": "B",
+  "lineCount": 1,
+  "byteSize": 0,
+  "tokenEstimate": 0,
+  "findings": [
+    {
+      "line": 1,
+      "excerpt": "",
+      "message": "No runnable command found anywhere in the file.",
+      "ruleId": "no-commands",
+      "ruleName": "No runnable commands",
+      "severity": "error",
+      "recommendation": "Add a commands section first: exact build, test, and lint invocations with flags, in backticks.",
+      "evidenceUrl": "https://arxiv.org/abs/2602.11988",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 1,
+      "excerpt": "",
+      "message": "No never/ask-first boundary found.",
+      "ruleId": "boundaries-missing",
+      "ruleName": "No boundaries declared",
+      "severity": "info",
+      "recommendation": "Add a short boundaries section: what the agent must never do, and what needs asking first.",
+      "evidenceUrl": "https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/",
+      "evidenceTier": "community"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "no-commands",
+      "count": 1,
+      "penalty": 15
+    },
+    {
+      "ruleId": "boundaries-missing",
+      "count": 1,
+      "penalty": 3
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects CLAUDE.md as an advisory user message (no compliance guarantee); official size target is under 200 lines. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Reads AGENTS.md natively (nearest file wins, 32 KiB cap — this file is 0.0 KiB). Supports AGENTS.override.md for local tweaks."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

@@ -6,12 +6,12 @@
     <title>aispekt — is your AGENTS.md helping or hurting?</title>
     <meta
       name="description"
-      content="Drop an AGENTS.md or CLAUDE.md file (or your whole repo) and get an evidence-cited analysis of what to cut. 100% in your browser — nothing is uploaded."
+      content="A fast CLI that scores AGENTS.md / CLAUDE.md agent instruction files against published evidence: what to cut, what to fix, and the study behind every finding. Single Rust binary, npm/bunx installable."
     />
     <meta property="og:title" content="aispekt — is your AGENTS.md helping or hurting?" />
     <meta
       property="og:description"
-      content="Evidence-cited analysis of AGENTS.md/CLAUDE.md files: what to cut, what to fix, and the study behind every finding. Fully client-side."
+      content="Evidence-cited CLI linter for AGENTS.md/CLAUDE.md files: what to cut, what to fix, and the study behind every finding. Single fast binary."
     />
     <meta property="og:url" content="https://aispekt.erfindor.com" />
     <meta property="og:type" content="website" />
@@ -20,7 +20,142 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <div id="app"></div>
+    <div class="wrap">
+      <header class="hero">
+        <h1><span class="scissors">🔍</span> aispekt</h1>
+        <p class="tag">
+          Is your <strong>AGENTS.md / CLAUDE.md</strong> helping your coding agent — or silently
+          taxing it? aispekt is a fast CLI that scores your agent instruction file against
+          published evidence: what to cut, what to fix, and <em>why</em>, with the study or
+          official doc behind every finding.
+        </p>
+        <pre class="quickstart"><code>bunx aispekt .        <span class="c"># or: npx aispekt .</span></code></pre>
+        <nav class="toc">
+          <a href="#install">Install</a>
+          <a href="#usage">Usage</a>
+          <a href="#rules">Rules</a>
+          <a href="#playground">Playground</a>
+          <a href="https://github.com/erf1nd0r/aispekt" rel="noopener">GitHub</a>
+          <a href="https://www.npmjs.com/package/aispekt" rel="noopener">npm</a>
+        </nav>
+      </header>
+
+      <section class="doc" id="install">
+        <h2>Install</h2>
+        <p>
+          The tool is a single native binary (Rust, ~1.4&nbsp;MB, no runtime) — a full repo
+          analysis takes about 20&nbsp;ms.
+        </p>
+        <div class="install-grid">
+          <div class="install-card">
+            <h3>npm / bun</h3>
+            <pre><code>bunx aispekt &lt;path&gt;
+<span class="c"># or install globally</span>
+npm install -g aispekt</code></pre>
+          </div>
+          <div class="install-card">
+            <h3>cargo</h3>
+            <pre><code>cargo install --locked \
+  --git https://github.com/erf1nd0r/aispekt aispekt</code></pre>
+          </div>
+          <div class="install-card">
+            <h3>binaries</h3>
+            <p class="small">
+              Prebuilt binaries for macOS, Linux, and Windows on the
+              <a href="https://github.com/erf1nd0r/aispekt/releases" rel="noopener">GitHub releases page</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="doc" id="usage">
+        <h2>Usage</h2>
+        <pre><code>aispekt &lt;file-or-dir&gt; [--json] [--min &lt;score&gt;]</code></pre>
+        <p>
+          Point it at a single <code>CLAUDE.md</code>/<code>AGENTS.md</code> — or at a repo
+          directory to unlock <strong>repo-aware checks</strong>: dead commands the file
+          references but <code>package.json</code> doesn't define, paths that don't exist,
+          lines that just restate the README, and a missing CLAUDE.md&nbsp;↔&nbsp;AGENTS.md bridge.
+        </p>
+        <table class="flags">
+          <tr><td><code>--json</code></td><td>machine-readable report on stdout</td></tr>
+          <tr><td><code>--min &lt;score&gt;</code></td><td>pass/fail threshold (default 60)</td></tr>
+          <tr><td><code>--version</code></td><td>print version</td></tr>
+        </table>
+        <p>
+          Exit codes: <code>0</code> score ≥ min · <code>1</code> below min ·
+          <code>2</code> usage or I/O error — drop it straight into CI:
+        </p>
+        <pre><code><span class="c"># fail the build when the instruction file degrades</span>
+bunx aispekt . --min 75</code></pre>
+        <p>
+          False positive on a heuristic? Suppress a single finding with an
+          <code>aispekt-ignore</code> marker on the flagged line or the line above —
+          like <code>eslint-disable-next-line</code>.
+        </p>
+      </section>
+
+      <section class="doc" id="scoring">
+        <h2>How scoring works</h2>
+        <p>
+          Scoring is <strong>penalty-only</strong>: you start at 100 and lose points for content
+          the evidence says hurts (redundancy, lint rules stated as prose, vague aspirations,
+          dead commands). Nothing adds points, because the 2026 evidence's predictive signals
+          are negative — completeness bonuses push files toward measurable harm. A lean,
+          command-focused file scores an A by simply not doing the harmful things.
+        </p>
+        <p>
+          Every rule carries a citation and a confidence tier:
+          <span class="tier measured">measured study</span>
+          <span class="tier">official docs</span>
+          <span class="tier">community</span>
+          <span class="tier">heuristic</span>.
+          Rules the studies contradict are labeled heuristic — never presented as fact.
+        </p>
+      </section>
+
+      <section class="doc" id="rules">
+        <h2>The rules</h2>
+        <p class="small">
+          Rendered live from <code>rules/rulepack.json</code> — the same versioned data file
+          the CLI embeds. Updating the rubric is a data edit, not a code change.
+        </p>
+        <div id="rules-list"><noscript>Enable JavaScript to view the rule table, or read rules/rulepack.json in the repo.</noscript></div>
+      </section>
+
+      <section class="doc" id="playground">
+        <h2>Playground</h2>
+        <p>
+          Try the analyzer without installing anything — this is the <em>same Rust engine</em>
+          compiled to WebAssembly, running entirely in your browser.
+          <strong class="privacy-inline">Nothing is uploaded, ever.</strong>
+        </p>
+        <div id="dropzone" role="button" tabindex="0" aria-label="Drop an instruction file or repo folder">
+          <div class="big">Drop AGENTS.md / CLAUDE.md here — or a whole repo folder</div>
+          <div class="sub">Folder drops unlock repo-aware checks: dead commands, stale paths, README redundancy</div>
+        </div>
+        <!-- hidden pickers live OUTSIDE the dropzone: a programmatic input.click()
+             bubbles, and the dropzone's click handler would re-fire the file picker
+             over the folder picker (the "Choose folder shows .md filter" bug) -->
+        <input type="file" id="file-input" accept=".md,.markdown,.txt" hidden />
+        <input type="file" id="dir-input" webkitdirectory hidden />
+        <div class="alt-actions">
+          <button class="ghost" id="pick-file">Choose file</button>
+          <button class="ghost" id="pick-dir">Choose folder</button>
+          <button class="ghost" id="toggle-paste">Paste text instead</button>
+        </div>
+        <div id="paste-area">
+          <textarea id="paste-text" placeholder="Paste your AGENTS.md / CLAUDE.md content here…" spellcheck="false"></textarea>
+          <button class="primary" id="analyze-paste">Analyze</button>
+        </div>
+        <div id="results"></div>
+      </section>
+
+      <footer>
+        <span id="footer-pack"></span>
+        <span>analysis is deterministic and local · <a href="https://www.npmjs.com/package/aispekt" rel="noopener">npm</a> · <a href="https://github.com/erf1nd0r/aispekt" rel="noopener">github</a> · MIT</span>
+      </footer>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

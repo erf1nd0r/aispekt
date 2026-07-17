@@ -1,0 +1,17 @@
+[package]
+name = "aispekt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Evidence-cited analyzer for AGENTS.md / CLAUDE.md agent instruction files: score, findings, and what to cut - every rule backed by a research citation."
+
+[[bin]]
+name = "aispekt"
+path = "src/main.rs"
+
+[dependencies]
+aispekt-core = { path = "../core" }
+
+[dev-dependencies]
+serde_json = { workspace = true }

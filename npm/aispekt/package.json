@@ -1,0 +1,38 @@
+{
+  "name": "aispekt",
+  "version": "0.2.0",
+  "description": "Evidence-cited analyzer for AGENTS.md / CLAUDE.md agent instruction files: score, findings, and what to cut - every rule backed by a research citation. Native Rust binary.",
+  "keywords": [
+    "agents.md",
+    "claude.md",
+    "ai-agents",
+    "linter",
+    "claude-code",
+    "codex",
+    "context-engineering",
+    "cli",
+    "rust"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erf1nd0r/aispekt.git"
+  },
+  "homepage": "https://aispekt.erfindor.com",
+  "bin": {
+    "aispekt": "bin/aispekt.js"
+  },
+  "files": [
+    "bin/aispekt.js"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "optionalDependencies": {
+    "aispekt-darwin-arm64": "0.2.0",
+    "aispekt-darwin-x64": "0.2.0",
+    "aispekt-linux-x64": "0.2.0",
+    "aispekt-linux-arm64": "0.2.0",
+    "aispekt-win32-x64": "0.2.0"
+  }
+}

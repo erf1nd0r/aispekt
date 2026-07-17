@@ -1,0 +1,82 @@
+{
+  "fileName": "hugefile.md",
+  "mode": "file",
+  "score": 87,
+  "grade": "B",
+  "lineCount": 905,
+  "byteSize": 125028,
+  "tokenEstimate": 31257,
+  "findings": [
+    {
+      "line": 1,
+      "excerpt": "122.1 KiB",
+      "message": "File is 122.1 KiB — Codex silently truncates at 32 KiB.",
+      "ruleId": "codex-cap",
+      "ruleName": "Exceeds Codex 32 KiB cap",
+      "severity": "error",
+      "recommendation": "Cut below 32 KiB, or split into nested per-directory files.",
+      "evidenceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 201,
+      "excerpt": "Some very long instruction line number 196 that keeps going and going to pad out the byte size of this file well past t…",
+      "message": "905 lines — Anthropic's target is under 200. (Cost argument, not adherence — see the cited caveat.)",
+      "ruleId": "size-cost",
+      "ruleName": "Length past 200 lines",
+      "severity": "warn",
+      "recommendation": "Cut code-derivable content first (trees, stack restatements, style rules); push sometimes-relevant knowledge into on-demand docs or skills.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "heuristic"
+    },
+    {
+      "line": 1,
+      "excerpt": "# Huge file",
+      "message": "No never/ask-first boundary found.",
+      "ruleId": "boundaries-missing",
+      "ruleName": "No boundaries declared",
+      "severity": "info",
+      "recommendation": "Add a short boundaries section: what the agent must never do, and what needs asking first.",
+      "evidenceUrl": "https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/",
+      "evidenceTier": "community"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "size-cost",
+      "count": 1,
+      "penalty": 5
+    },
+    {
+      "ruleId": "boundaries-missing",
+      "count": 1,
+      "penalty": 3
+    },
+    {
+      "ruleId": "codex-cap",
+      "count": 1,
+      "penalty": 5
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects CLAUDE.md as an advisory user message (no compliance guarantee); official size target is under 200 lines — this file is 905. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Truncates at 32 KiB — this file is 122.1 KiB, everything past the cap is silently dropped."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

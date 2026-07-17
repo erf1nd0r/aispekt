@@ -1,0 +1,14 @@
+[package]
+name = "aispekt-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "WASM build of the aispekt engine for the docs-site playground"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+aispekt-core = { path = "../core" }
+serde_json = { workspace = true }

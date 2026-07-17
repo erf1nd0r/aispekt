@@ -1,0 +1,310 @@
+{
+  "fileName": "bad.md",
+  "mode": "file",
+  "score": 31,
+  "grade": "F",
+  "lineCount": 54,
+  "byteSize": 1272,
+  "tokenEstimate": 303,
+  "findings": [
+    {
+      "line": 8,
+      "excerpt": "- Use tabs for indentation in Makefiles",
+      "message": "Tabs (line 8) vs spaces (line 7) for indentation.",
+      "ruleId": "contradiction-lite",
+      "ruleName": "Contradictory instructions",
+      "severity": "error",
+      "recommendation": "Pick one convention, delete the other, and let a linter or lockfile enforce it where possible.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 33,
+      "excerpt": "Run `npm install` then `yarn build` to get started.",
+      "message": "Mixed package managers in commands: npm, yarn.",
+      "ruleId": "contradiction-lite",
+      "ruleName": "Contradictory instructions",
+      "severity": "error",
+      "recommendation": "Pick one convention, delete the other, and let a linter or lockfile enforce it where possible.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 34,
+      "excerpt": "Set OPENAI_API_KEY=sk-abcde…[redacted] in your shell.",
+      "message": "Token-shaped string: API key (sk-...).",
+      "ruleId": "secret-leak",
+      "ruleName": "Possible secret",
+      "severity": "error",
+      "recommendation": "Remove the credential, rotate it, and reference an env var name instead.",
+      "evidenceUrl": "https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/",
+      "evidenceTier": "community"
+    },
+    {
+      "line": 7,
+      "excerpt": "- Use 2 spaces for indentation",
+      "message": "Formatter-enforceable style rule stated as prose.",
+      "ruleId": "lint-leakage",
+      "ruleName": "Lint leakage",
+      "severity": "warn",
+      "recommendation": "Delete the rule and point to the linter instead, e.g. \"run `eslint --fix`; the linter config is the source of truth.\"",
+      "evidenceUrl": "https://arxiv.org/abs/2606.15828",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 9,
+      "excerpt": "- Always use single quotes",
+      "message": "Formatter-enforceable style rule stated as prose.",
+      "ruleId": "lint-leakage",
+      "ruleName": "Lint leakage",
+      "severity": "warn",
+      "recommendation": "Delete the rule and point to the linter instead, e.g. \"run `eslint --fix`; the linter config is the source of truth.\"",
+      "evidenceUrl": "https://arxiv.org/abs/2606.15828",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 10,
+      "excerpt": "- No semicolons",
+      "message": "Formatter-enforceable style rule stated as prose.",
+      "ruleId": "lint-leakage",
+      "ruleName": "Lint leakage",
+      "severity": "warn",
+      "recommendation": "Delete the rule and point to the linter instead, e.g. \"run `eslint --fix`; the linter config is the source of truth.\"",
+      "evidenceUrl": "https://arxiv.org/abs/2606.15828",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 11,
+      "excerpt": "- Use trailing commas everywhere",
+      "message": "Formatter-enforceable style rule stated as prose.",
+      "ruleId": "lint-leakage",
+      "ruleName": "Lint leakage",
+      "severity": "warn",
+      "recommendation": "Delete the rule and point to the linter instead, e.g. \"run `eslint --fix`; the linter config is the source of truth.\"",
+      "evidenceUrl": "https://arxiv.org/abs/2606.15828",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 12,
+      "excerpt": "- Maximum line length is 120 characters",
+      "message": "Formatter-enforceable style rule stated as prose.",
+      "ruleId": "lint-leakage",
+      "ruleName": "Lint leakage",
+      "severity": "warn",
+      "recommendation": "Delete the rule and point to the linter instead, e.g. \"run `eslint --fix`; the linter config is the source of truth.\"",
+      "evidenceUrl": "https://arxiv.org/abs/2606.15828",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 13,
+      "excerpt": "- Write clean code",
+      "message": "Vague phrase \"write clean code\" — nothing testable for the agent.",
+      "ruleId": "vague-rules",
+      "ruleName": "Vague / aspirational rule",
+      "severity": "warn",
+      "recommendation": "Replace with a concrete, verifiable instruction (exact command, path, or example) or delete the line.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 14,
+      "excerpt": "- Use meaningful names",
+      "message": "Vague phrase \"meaningful names\" — nothing testable for the agent.",
+      "ruleId": "vague-rules",
+      "ruleName": "Vague / aspirational rule",
+      "severity": "warn",
+      "recommendation": "Replace with a concrete, verifiable instruction (exact command, path, or example) or delete the line.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 15,
+      "excerpt": "- Keep it simple",
+      "message": "Vague phrase \"keep it simple\" — nothing testable for the agent.",
+      "ruleId": "vague-rules",
+      "ruleName": "Vague / aspirational rule",
+      "severity": "warn",
+      "recommendation": "Replace with a concrete, verifiable instruction (exact command, path, or example) or delete the line.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 20,
+      "excerpt": "project/",
+      "message": "Directory-tree block of 9 lines.",
+      "ruleId": "directory-tree",
+      "ruleName": "Directory tree / codebase tour",
+      "severity": "warn",
+      "recommendation": "Delete the tree. Keep at most one line per genuinely non-obvious location (\"API handlers live in src/api/handlers/\").",
+      "evidenceUrl": "https://arxiv.org/abs/2602.11988",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 38,
+      "excerpt": "IMPORTANT: Follow best practices.",
+      "message": "Vague phrase \"best practices\" — nothing testable for the agent.",
+      "ruleId": "vague-rules",
+      "ruleName": "Vague / aspirational rule",
+      "severity": "warn",
+      "recommendation": "Replace with a concrete, verifiable instruction (exact command, path, or example) or delete the line.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 39,
+      "excerpt": "- Handle errors appropriately",
+      "message": "Vague phrase \"handle errors appropriately\" — nothing testable for the agent.",
+      "ruleId": "vague-rules",
+      "ruleName": "Vague / aspirational rule",
+      "severity": "warn",
+      "recommendation": "Replace with a concrete, verifiable instruction (exact command, path, or example) or delete the line.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 40,
+      "excerpt": "- Be careful when refactoring",
+      "message": "Vague phrase \"be careful\" — nothing testable for the agent.",
+      "ruleId": "vague-rules",
+      "ruleName": "Vague / aspirational rule",
+      "severity": "warn",
+      "recommendation": "Replace with a concrete, verifiable instruction (exact command, path, or example) or delete the line.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 42,
+      "excerpt": "- Write tests for all new features because quality matters here",
+      "message": "Duplicates line 41.",
+      "ruleId": "duplicate-rules",
+      "ruleName": "Duplicate rule",
+      "severity": "warn",
+      "recommendation": "Keep one occurrence, delete the rest.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 51,
+      "excerpt": "- [Architecture](docs/architecture.md)",
+      "message": "Cluster of doc links with no instruction to read them.",
+      "ruleId": "pointer-without-instruction",
+      "ruleName": "Doc pointers without a read instruction",
+      "severity": "warn",
+      "recommendation": "Prefix the list with an explicit imperative, e.g. \"IMPORTANT: read the relevant doc below before starting work.\"",
+      "evidenceUrl": "https://alexop.dev/posts/stop-bloating-your-claude-md-progressive-disclosure-ai-coding-tools/",
+      "evidenceTier": "community"
+    },
+    {
+      "line": 43,
+      "excerpt": "- NEVER push directly to main",
+      "message": "Zero-exception rule expressed as advisory prose.",
+      "ruleId": "enforcement-prose",
+      "ruleName": "Hard rule as advisory prose",
+      "severity": "info",
+      "recommendation": "Keep the line if you accept ~advisory compliance; for zero-exception rules add a hook, lint rule, or CI check.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 44,
+      "excerpt": "- Always run prettier before committing",
+      "message": "Zero-exception rule expressed as advisory prose.",
+      "ruleId": "enforcement-prose",
+      "ruleName": "Hard rule as advisory prose",
+      "severity": "info",
+      "recommendation": "Keep the line if you accept ~advisory compliance; for zero-exception rules add a hook, lint rule, or CI check.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 45,
+      "excerpt": "- You must never use console.log in production code",
+      "message": "Zero-exception rule expressed as advisory prose.",
+      "ruleId": "enforcement-prose",
+      "ruleName": "Hard rule as advisory prose",
+      "severity": "info",
+      "recommendation": "Keep the line if you accept ~advisory compliance; for zero-exception rules add a hook, lint rule, or CI check.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 47,
+      "excerpt": "IMPORTANT: quality is CRITICAL. YOU MUST take this seriously.",
+      "message": "6 emphasis markers (IMPORTANT/YOU MUST/CRITICAL) — past ~5 they cancel out.",
+      "ruleId": "emphasis-overuse",
+      "ruleName": "Emphasis overuse",
+      "severity": "info",
+      "recommendation": "Keep emphasis on the 1-3 rules that genuinely matter most; demote the rest to plain statements.",
+      "evidenceUrl": "https://www.humanlayer.dev/blog/writing-a-good-claude-md",
+      "evidenceTier": "community"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "lint-leakage",
+      "count": 5,
+      "penalty": 15
+    },
+    {
+      "ruleId": "directory-tree",
+      "count": 1,
+      "penalty": 5
+    },
+    {
+      "ruleId": "vague-rules",
+      "count": 6,
+      "penalty": 12
+    },
+    {
+      "ruleId": "enforcement-prose",
+      "count": 3,
+      "penalty": 3
+    },
+    {
+      "ruleId": "secret-leak",
+      "count": 1,
+      "penalty": 15
+    },
+    {
+      "ruleId": "emphasis-overuse",
+      "count": 1,
+      "penalty": 4
+    },
+    {
+      "ruleId": "pointer-without-instruction",
+      "count": 1,
+      "penalty": 3
+    },
+    {
+      "ruleId": "duplicate-rules",
+      "count": 1,
+      "penalty": 2
+    },
+    {
+      "ruleId": "contradiction-lite",
+      "count": 2,
+      "penalty": 10
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects CLAUDE.md as an advisory user message (no compliance guarantee); official size target is under 200 lines. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Reads AGENTS.md natively (nearest file wins, 32 KiB cap — this file is 1.2 KiB). Supports AGENTS.override.md for local tweaks."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

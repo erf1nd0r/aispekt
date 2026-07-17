@@ -1,49 +1,45 @@
-import { analyze, rulepack } from "./engine/analyze";
+import pack from "../rules/rulepack.json";
 import { stripCommonRoot } from "./engine/parse";
-import type { AnalysisInput, RepoContext, Report } from "./engine/types";
+import type { AnalysisInput, RepoContext, Report, RuleMeta } from "./engine/types";
 import { renderReport, renderError } from "./ui/render";
+import { analyze, engineReady } from "./wasmEngine";
 
-const app = document.getElementById("app")!;
+// ---- docs: rules reference rendered from the embedded rulepack ----
 
-app.innerHTML = `
-  <div class="wrap">
-    <header class="hero">
-      <h1><span class="scissors">🔍</span> aispekt</h1>
-      <p class="tag">
-        Is your <strong>AGENTS.md / CLAUDE.md</strong> helping your coding agent — or silently taxing it?
-        Drop the file (or your whole repo folder) and get an evidence-cited answer:
-        what to cut, what to fix, and why, with the study or official doc behind every finding.
-      </p>
-      <p class="privacy">100% in your browser. Nothing is uploaded, ever.</p>
-    </header>
+function esc(s: string): string {
+  return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
 
-    <div id="dropzone" role="button" tabindex="0" aria-label="Drop an instruction file or repo folder">
-      <div class="big">Drop AGENTS.md / CLAUDE.md here — or a whole repo folder</div>
-      <div class="sub">Folder drops unlock repo-aware checks: dead commands, stale paths, README redundancy</div>
+const TIER_LABEL: Record<string, string> = {
+  measured: "measured study",
+  official: "official docs",
+  community: "community",
+  heuristic: "heuristic",
+};
+
+const rules = (pack as { rules: RuleMeta[]; version: string; updated: string }).rules;
+document.getElementById("rules-list")!.innerHTML = rules
+  .map(
+    (r) => `
+  <article class="rule-row sev-${r.severity}">
+    <div class="head">
+      <span class="sev">${r.severity}</span>
+      <span class="rule">${esc(r.name)}</span>
+      <code class="rule-id">${esc(r.id)}</code>
+      <span class="scope-chip">${r.scope}</span>
+      <a class="tier ${r.evidenceTier}" href="${esc(r.evidenceUrl)}" target="_blank" rel="noopener"
+         title="Open the evidence behind this rule">${TIER_LABEL[r.evidenceTier] ?? r.evidenceTier} ↗</a>
     </div>
-    <!-- hidden pickers live OUTSIDE the dropzone: a programmatic input.click()
-         bubbles, and the dropzone's click handler would re-fire the file picker
-         over the folder picker (the "Choose folder shows .md filter" bug) -->
-    <input type="file" id="file-input" accept=".md,.markdown,.txt" hidden />
-    <input type="file" id="dir-input" webkitdirectory hidden />
-    <div class="alt-actions">
-      <button class="ghost" id="pick-file">Choose file</button>
-      <button class="ghost" id="pick-dir">Choose folder</button>
-      <button class="ghost" id="toggle-paste">Paste text instead</button>
-    </div>
-    <div id="paste-area">
-      <textarea id="paste-text" placeholder="Paste your AGENTS.md / CLAUDE.md content here…" spellcheck="false"></textarea>
-      <button class="primary" id="analyze-paste">Analyze</button>
-    </div>
+    <p class="msg">${esc(r.summary)}</p>
+    <p class="fix"><b>Fix:</b> ${esc(r.recommendation)}</p>
+  </article>`,
+  )
+  .join("");
 
-    <div id="results"></div>
+document.getElementById("footer-pack")!.textContent =
+  `rulepack v${pack.version} · evidence verified ${pack.updated} · ${rules.length} rules`;
 
-    <footer>
-      <span>rulepack v${rulepack.version} · evidence verified ${rulepack.updated} · ${rulepack.rules.length} rules</span>
-      <span>analysis is deterministic and local · <a href="https://www.npmjs.com/package/aispekt" rel="noopener">npm</a> · <a href="https://github.com/erf1nd0r/aispekt" rel="noopener">github</a> · <code>bunx aispekt &lt;repo&gt;</code></span>
-    </footer>
-  </div>
-`;
+// ---- playground: same walk plumbing as always, engine now WASM ----
 
 const results = document.getElementById("results")!;
 const dropzone = document.getElementById("dropzone")!;
@@ -54,6 +50,20 @@ const INSTRUCTION_NAMES = ["CLAUDE.md", "AGENTS.md"];
 const SKIP_SEGMENTS = new Set(["node_modules", ".git", "dist", "build", ".next", "vendor", "coverage"]);
 const MAX_FILES = 200_000;
 
+// Warm the engine the moment the user shows intent, so the first analysis
+// doesn't pay the module fetch.
+let warmed = false;
+function warm(): void {
+  if (!warmed) {
+    warmed = true;
+    void engineReady().catch(() => {
+      warmed = false;
+    });
+  }
+}
+dropzone.addEventListener("pointerenter", warm, { once: false });
+dropzone.addEventListener("focus", warm);
+
 function show(report: Report): void {
   results.innerHTML = renderReport(report);
   results.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -63,8 +73,21 @@ function fail(message: string): void {
   results.innerHTML = renderError(message);
 }
 
+function pending(): void {
+  results.innerHTML = `<div class="clean">Analyzing…</div>`;
+}
+
+async function runAnalysis(input: AnalysisInput): Promise<void> {
+  pending();
+  try {
+    show(await analyze(input));
+  } catch (err) {
+    fail(`Analysis failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 function analyzeSingle(fileName: string, content: string): void {
-  show(analyze({ fileName, content }));
+  void runAnalysis({ fileName, content });
 }
 
 /**
@@ -187,12 +210,7 @@ async function analyzeRepo(
     }
   }
   const repo: RepoContext = { paths, contents, ...flags };
-  const input: AnalysisInput = {
-    fileName: instruction,
-    content: contents[instruction] ?? "",
-    repo,
-  };
-  show(analyze(input));
+  await runAnalysis({ fileName: instruction, content: contents[instruction] ?? "", repo });
 }
 
 async function handleDrop(dt: DataTransfer): Promise<void> {
@@ -221,6 +239,7 @@ async function handleDrop(dt: DataTransfer): Promise<void> {
 
 dropzone.addEventListener("dragover", (e) => {
   e.preventDefault();
+  warm();
   dropzone.classList.add("dragover");
 });
 dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
@@ -234,8 +253,14 @@ dropzone.addEventListener("keydown", (e) => {
   if (e.key === "Enter" || e.key === " ") fileInput.click();
 });
 
-document.getElementById("pick-file")!.addEventListener("click", () => fileInput.click());
-document.getElementById("pick-dir")!.addEventListener("click", () => dirInput.click());
+document.getElementById("pick-file")!.addEventListener("click", () => {
+  warm();
+  fileInput.click();
+});
+document.getElementById("pick-dir")!.addEventListener("click", () => {
+  warm();
+  dirInput.click();
+});
 
 fileInput.addEventListener("change", async () => {
   const f = fileInput.files?.[0];
@@ -249,6 +274,7 @@ dirInput.addEventListener("change", async () => {
 
 const pasteArea = document.getElementById("paste-area")!;
 document.getElementById("toggle-paste")!.addEventListener("click", () => {
+  warm();
   pasteArea.classList.toggle("open");
 });
 document.getElementById("analyze-paste")!.addEventListener("click", () => {

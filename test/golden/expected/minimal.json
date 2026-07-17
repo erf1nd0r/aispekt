@@ -1,0 +1,50 @@
+{
+  "fileName": "minimal.md",
+  "mode": "file",
+  "score": 99,
+  "grade": "A",
+  "lineCount": 5,
+  "byteSize": 66,
+  "tokenEstimate": 17,
+  "findings": [
+    {
+      "line": 4,
+      "excerpt": "Never push to prod without asking first.",
+      "message": "Zero-exception rule expressed as advisory prose.",
+      "ruleId": "enforcement-prose",
+      "ruleName": "Hard rule as advisory prose",
+      "severity": "info",
+      "recommendation": "Keep the line if you accept ~advisory compliance; for zero-exception rules add a hook, lint rule, or CI check.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "enforcement-prose",
+      "count": 1,
+      "penalty": 1
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects CLAUDE.md as an advisory user message (no compliance guarantee); official size target is under 200 lines. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Reads AGENTS.md natively (nearest file wins, 32 KiB cap — this file is 0.1 KiB). Supports AGENTS.override.md for local tweaks."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

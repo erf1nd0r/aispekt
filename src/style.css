@@ -41,7 +41,68 @@ header.hero { margin-bottom: 28px; }
   margin-top: 10px; font-size: 0.85rem; color: var(--accent); font-weight: 600;
 }
 
+/* ---- docs sections ---- */
+.quickstart {
+  margin-top: 16px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 0.95rem;
+  overflow-x: auto;
+}
+.quickstart .c, .doc pre .c { color: var(--muted); }
+nav.toc { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
+nav.toc a {
+  color: var(--muted); text-decoration: none; font-size: 0.9rem; font-weight: 600;
+  border-bottom: 2px solid transparent; padding-bottom: 2px;
+}
+nav.toc a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+section.doc { margin-top: 44px; }
+section.doc h2 { font-size: 1.35rem; letter-spacing: -0.01em; margin-bottom: 10px; }
+section.doc p { margin-top: 8px; max-width: 680px; }
+section.doc p.small, .install-card p.small { color: var(--muted); font-size: 0.88rem; }
+section.doc pre {
+  margin-top: 12px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 16px; font-family: var(--mono); font-size: 0.85rem;
+  overflow-x: auto; line-height: 1.6;
+}
+section.doc code, section.doc td code {
+  font-family: var(--mono); font-size: 0.88em;
+  background: color-mix(in srgb, var(--line) 40%, transparent);
+  padding: 1px 5px; border-radius: 5px;
+}
+section.doc pre code { background: none; padding: 0; }
+.install-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 14px; }
+.install-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+}
+.install-card h3 { font-size: 0.95rem; margin-bottom: 8px; }
+.install-card pre { margin-top: 0; border: none; padding: 0; background: none; }
+table.flags { margin-top: 12px; border-collapse: collapse; }
+table.flags td { padding: 6px 18px 6px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+table.flags tr:last-child td { border-bottom: none; }
+.privacy-inline { color: var(--accent); }
+#rules-list { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.rule-row {
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--info);
+  border-radius: 10px; padding: 12px 16px;
+}
+.rule-row.sev-error { border-left-color: var(--error); }
+.rule-row.sev-warn { border-left-color: var(--warn); }
+.rule-row .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rule-row .rule { font-weight: 700; }
+.rule-row .sev { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.rule-row.sev-error .sev { color: var(--error); }
+.rule-row.sev-warn .sev { color: var(--warn); }
+.rule-row.sev-info .sev { color: var(--info); }
+.rule-row .rule-id { color: var(--muted); font-size: 0.78rem; font-family: var(--mono); }
+.scope-chip {
+  font-size: 0.72rem; padding: 1px 8px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--muted);
+}
+.rule-row .msg { margin-top: 6px; font-size: 0.9rem; }
+.rule-row .fix { margin-top: 4px; font-size: 0.86rem; color: var(--muted); }
+.rule-row .fix b { color: var(--accent); }
+
 #dropzone {
+  margin-top: 16px;
   border: 2px dashed var(--line);
   border-radius: 12px;
   background: var(--panel);

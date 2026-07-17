@@ -1,0 +1,93 @@
+{
+  "fileName": "contradictions.md",
+  "mode": "file",
+  "score": 86,
+  "grade": "B",
+  "lineCount": 8,
+  "byteSize": 183,
+  "tokenEstimate": 46,
+  "findings": [
+    {
+      "line": 4,
+      "excerpt": "Use 4 spaces for indent in Python files.",
+      "message": "Tabs (line 3) vs spaces (line 4) for indentation.",
+      "ruleId": "contradiction-lite",
+      "ruleName": "Contradictory instructions",
+      "severity": "error",
+      "recommendation": "Pick one convention, delete the other, and let a linter or lockfile enforce it where possible.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 6,
+      "excerpt": "Run `npm run build` and also `bun run test` for checks.",
+      "message": "Mixed package managers in commands: bun, npm.",
+      "ruleId": "contradiction-lite",
+      "ruleName": "Contradictory instructions",
+      "severity": "error",
+      "recommendation": "Pick one convention, delete the other, and let a linter or lockfile enforce it where possible.",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "evidenceTier": "official"
+    },
+    {
+      "line": 4,
+      "excerpt": "Use 4 spaces for indent in Python files.",
+      "message": "Formatter-enforceable style rule stated as prose.",
+      "ruleId": "lint-leakage",
+      "ruleName": "Lint leakage",
+      "severity": "warn",
+      "recommendation": "Delete the rule and point to the linter instead, e.g. \"run `eslint --fix`; the linter config is the source of truth.\"",
+      "evidenceUrl": "https://arxiv.org/abs/2606.15828",
+      "evidenceTier": "measured"
+    },
+    {
+      "line": 7,
+      "excerpt": "Never commit directly to main.",
+      "message": "Zero-exception rule expressed as advisory prose.",
+      "ruleId": "enforcement-prose",
+      "ruleName": "Hard rule as advisory prose",
+      "severity": "info",
+      "recommendation": "Keep the line if you accept ~advisory compliance; for zero-exception rules add a hook, lint rule, or CI check.",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "evidenceTier": "official"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "lint-leakage",
+      "count": 1,
+      "penalty": 3
+    },
+    {
+      "ruleId": "enforcement-prose",
+      "count": 1,
+      "penalty": 1
+    },
+    {
+      "ruleId": "contradiction-lite",
+      "count": 2,
+      "penalty": 10
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects CLAUDE.md as an advisory user message (no compliance guarantee); official size target is under 200 lines. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Reads AGENTS.md natively (nearest file wins, 32 KiB cap — this file is 0.2 KiB). Supports AGENTS.override.md for local tweaks."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

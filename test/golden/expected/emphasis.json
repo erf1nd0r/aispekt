@@ -1,0 +1,50 @@
+{
+  "fileName": "emphasis.md",
+  "mode": "file",
+  "score": 96,
+  "grade": "A",
+  "lineCount": 5,
+  "byteSize": 135,
+  "tokenEstimate": 34,
+  "findings": [
+    {
+      "line": 4,
+      "excerpt": "IMPORTANT: also IMPORTANT and YOU MUST plus CRITICAL again.",
+      "message": "8 emphasis markers (IMPORTANT/YOU MUST/CRITICAL) — past ~5 they cancel out.",
+      "ruleId": "emphasis-overuse",
+      "ruleName": "Emphasis overuse",
+      "severity": "info",
+      "recommendation": "Keep emphasis on the 1-3 rules that genuinely matter most; demote the rest to plain statements.",
+      "evidenceUrl": "https://www.humanlayer.dev/blog/writing-a-good-claude-md",
+      "evidenceTier": "community"
+    }
+  ],
+  "penalties": [
+    {
+      "ruleId": "emphasis-overuse",
+      "count": 1,
+      "penalty": 4
+    }
+  ],
+  "agentNotes": [
+    {
+      "agent": "Claude Code",
+      "note": "Injects CLAUDE.md as an advisory user message (no compliance guarantee); official size target is under 200 lines. Zero-exception rules belong in hooks."
+    },
+    {
+      "agent": "OpenAI Codex",
+      "note": "Reads AGENTS.md natively (nearest file wins, 32 KiB cap — this file is 0.1 KiB). Supports AGENTS.override.md for local tweaks."
+    },
+    {
+      "agent": "Cursor",
+      "note": "Reads AGENTS.md natively. Path-scoped rules need .cursor/rules/*.mdc — plain .md files there are silently ignored."
+    },
+    {
+      "agent": "GitHub Copilot",
+      "note": "Reads AGENTS.md natively (coding agent, since Aug 2025) alongside .github/copilot-instructions.md."
+    }
+  ],
+  "notices": [],
+  "rulepackVersion": "1.0.1",
+  "rulepackUpdated": "2026-07-14"
+}

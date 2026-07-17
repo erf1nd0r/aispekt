@@ -1,0 +1,16 @@
+[package]
+name = "aispekt-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Evidence-cited analyzer engine for AGENTS.md / CLAUDE.md agent instruction files"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+fancy-regex = { workspace = true }
+
+[dev-dependencies]
+proptest = "1"

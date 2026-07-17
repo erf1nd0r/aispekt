@@ -2,7 +2,39 @@
 
 **Is your AGENTS.md / CLAUDE.md helping your coding agent — or silently taxing it?**
 
-Drop an instruction file (or your whole repo folder) and get a deterministic score plus evidence-cited recommendations: what to cut, what to fix, and the study or official doc behind every finding. 100% client-side — nothing is uploaded.
+aispekt is a fast CLI (single native Rust binary, ~1.4 MB, ~20 ms per repo) that scores your agent instruction file and gives evidence-cited recommendations: what to cut, what to fix, and the study or official doc behind every finding.
+
+```
+bunx aispekt .          # or: npx aispekt .
+```
+
+Docs + browser playground: **https://aispekt.erfindor.com**
+
+## Install
+
+```
+# npm / bun (prebuilt binary via platform packages)
+npm install -g aispekt
+
+# cargo (build from source)
+cargo install --locked --git https://github.com/erf1nd0r/aispekt aispekt
+```
+
+Prebuilt binaries for macOS/Linux/Windows are attached to [GitHub releases](https://github.com/erf1nd0r/aispekt/releases).
+
+## Usage
+
+```
+aispekt <file-or-dir> [--json] [--min <score>]
+```
+
+Point it at a single file, or at a repo directory to unlock **repo-aware checks**: dead commands vs `package.json`, stale paths, README redundancy, missing CLAUDE.md ↔ AGENTS.md bridge, unresolved `@`-imports.
+
+Exit codes: 0 when score ≥ min (default 60), 1 below, 2 on usage/IO errors — drop it into CI or a pre-commit hook:
+
+```
+bunx aispekt . --min 75
+```
 
 ## Why subtractive?
 
@@ -14,21 +46,9 @@ The 2026 evidence flipped the old "write a thorough agents file" advice:
 
 So aispekt scores by **penalty only** — it never rewards padding, and a lean 30-line file with exact commands and real gotchas scores 100.
 
-## Usage
-
-**Web:** `bun run dev`, then drop a file or folder onto the page. Folder drops unlock repo-aware checks (dead commands vs package.json, stale paths, README redundancy, missing CLAUDE.md bridge, unresolved @-imports).
-
-**CLI:** same engine, real filesystem:
-
-```
-bunx aispekt <file-or-dir>  # or locally: bun src/cli.ts <file-or-dir> [--json] [--min <score>]
-```
-
-Exit codes: 0 when score ≥ min (default 60), 1 below, 2 on usage/IO errors — drop it into CI or a pre-commit hook.
-
 ## How it stays current (the rulepack)
 
-The ecosystem moves fast; hardcoded rules rot. aispekt separates the **engine** (check implementations, TypeScript) from the **rulepack** (`rules/rulepack.json`) — the versioned data that carries each rule's weight, severity, confidence tier, and citation:
+The ecosystem moves fast; hardcoded rules rot. aispekt separates the **engine** (check implementations, Rust) from the **rulepack** (`rules/rulepack.json`) — the versioned data that carries each rule's weight, severity, confidence tier, and citation:
 
 ```json
 {
@@ -43,11 +63,11 @@ The ecosystem moves fast; hardcoded rules rot. aispekt separates the **engine** 
 **Updating the rubric is a data edit, not a code change:**
 
 1. Re-weight / retire / re-cite a rule → edit `rules/rulepack.json`, bump `version` (semver: patch = wording, minor = new rule, major = rule changed/removed), set `lastVerified`.
-2. New rule → add the JSON entry *and* a check implementation; the engine **throws at load** if pack and implementations disagree in either direction, so drift is impossible to ship.
-3. Every finding in the UI/CLI links its `evidenceUrl` and shows its tier (`measured` > `official` > `community` > `heuristic`). Rules the studies contradict (like the 200-line target) are labeled `heuristic` and framed as cost, not adherence — honesty is a feature.
+2. New rule → add the JSON entry *and* a check implementation; the engine **fails at test time** if pack and implementations disagree in either direction, so drift is impossible to ship.
+3. Every finding in the CLI/playground links its `evidenceUrl` and shows its tier (`measured` > `official` > `community` > `heuristic`). Rules the studies contradict (like the 200-line target) are labeled `heuristic` and framed as cost, not adherence — honesty is a feature.
 4. Re-verify cadence: sweep the evidence URLs (agents.md spec, Anthropic memory/best-practices docs, the arXiv studies) and refresh `lastVerified`; both doc hosts moved in the last year, so follow redirects.
 
-Calibration is regression-tested: known-good and known-bad fixtures pin score bounds (`test/calibration.test.ts`), and property tests guarantee scoring stays penalty-only (appending bloat can never raise a score).
+Calibration is regression-tested: known-good and known-bad fixtures pin score bounds, and property tests guarantee scoring stays penalty-only (appending bloat can never raise a score).
 
 ## Suppressing a finding
 
@@ -60,6 +80,19 @@ Heuristics have edges. Add an `aispekt-ignore` marker (the legacy `prune-ignore`
 
 (Version-suffixed identifiers like git tags are already skipped automatically.)
 
+## Architecture
+
+```
+crates/core   the engine: 18 checks + scoring, pure and deterministic (Rust)
+crates/cli    the product: `aispekt` binary (filesystem walk, human/JSON output)
+crates/wasm   the same engine compiled to WASM for the docs-site playground
+rules/        rulepack.json — versioned rule data, embedded at compile time
+src/, test/   TypeScript reference engine + web docs/playground frontend
+npm/          npm wrapper package (platform-binary distribution)
+```
+
+The Rust engine is a semantics-preserving port of the original TypeScript engine, held to **byte-identical JSON output** by a golden-corpus parity suite (`crates/cli/tests/golden.rs` against `test/golden/`) — regenerate goldens with `bun src/cli.ts <input> --json` only when a rule deliberately changes. The WASM build is additionally cross-checked against the TS engine in `test/wasm.test.ts`.
+
 ## Roadmap (v2 candidates)
 
 - LLM-judge layer (bring-your-own-key) for semantic checks: "is this rule dead weight for a strong model?"
@@ -69,10 +102,16 @@ Heuristics have edges. Add an `aispekt-ignore` marker (the legacy `prune-ignore`
 ## Development
 
 ```
+cargo test --workspace      # engine + CLI + golden parity + property tests
+cargo clippy --workspace --all-targets -- -D warnings
+
 bun install
-bun test           # 55+ tests incl. 1000-run property suites
-bun run typecheck
-bun run build      # tsc + vite
+bun test                    # TS reference engine + WASM parity
+bun run build               # tsc + wasm build + vite (docs site)
 ```
 
-Zero runtime dependencies. The engine (`src/engine/`) is pure TS with no DOM — the web app and CLI are thin shells over it.
+Zero runtime dependencies in every deliverable: the binary is static, the wasm module is dependency-free, the site ships no JS framework.
+
+## Releasing
+
+Tag `v<version>` (matching `npm/aispekt/package.json`) and push — `.github/workflows/release.yml` cross-builds five targets, publishes the npm wrapper + platform packages, and attaches binaries to the GitHub release. Requires the `NPM_TOKEN` repo secret.

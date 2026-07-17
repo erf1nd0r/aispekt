@@ -1,0 +1,1 @@
+{ "name": "drift", "scripts": { "test": "node t.js" } }
