@@ -43,6 +43,10 @@ fn pack_result(payload: String) -> *mut u8 {
 
 /// # Safety
 /// `ptr..ptr+len` must be a valid UTF-8 JSON input buffer written by the host.
+///
+/// The payload is an envelope — `{"ok": <report>}` or `{"err": "<message>"}`
+/// — so success/error discrimination never depends on the report's own key
+/// set (a future top-level `error` field in Report must not break the host).
 #[no_mangle]
 pub unsafe extern "C" fn aispekt_analyze(ptr: *const u8, len: usize) -> *mut u8 {
     let bytes = std::slice::from_raw_parts(ptr, len);
@@ -50,8 +54,8 @@ pub unsafe extern "C" fn aispekt_analyze(ptr: *const u8, len: usize) -> *mut u8 
         .map_err(|e| e.to_string())
         .and_then(|s| serde_json::from_str::<AnalysisInput>(s).map_err(|e| e.to_string()))
     {
-        Ok(input) => report_to_json(&analyze(&input)),
-        Err(e) => format!("{{\"error\":{}}}", serde_json::to_string(&e).unwrap_or_default()),
+        Ok(input) => format!("{{\"ok\":{}}}", report_to_json(&analyze(&input))),
+        Err(e) => serde_json::json!({ "err": e }).to_string(),
     };
     pack_result(payload)
 }

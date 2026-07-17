@@ -1,6 +1,8 @@
 //! CLI behavior tests — ports of test/cli.test.ts: exit codes, --json, --min
 //! parsing, --version, unknown arguments.
 
+mod common;
+
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -46,7 +48,7 @@ fn min_threshold_overrides() {
 
 #[test]
 fn min_requires_number() {
-    for bad in ["abc", "", " "] {
+    for bad in ["abc", "", " ", "nan", "NaN"] {
         let out = bin()
             .args([fixture("test/fixtures/good.md"), "--min".into(), bad.into()])
             .output()
@@ -75,8 +77,9 @@ fn json_output_parses() {
 
 #[test]
 fn dir_mode_runs_repo_checks() {
+    let dir = common::make_repo_fixture();
     let out = bin()
-        .args([fixture("test/fixtures/repo"), "--json".into()])
+        .args([dir.to_string_lossy().into_owned(), "--json".into()])
         .output()
         .unwrap();
     let report: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();

@@ -7,12 +7,34 @@ use std::sync::LazyLock;
 /// The TS engine slices by UTF-16 code units; we mirror that exactly.
 const MAX_SCAN_LINE: usize = 10_000;
 
-static FENCE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\s*(```|~~~)").unwrap());
+/// JS whitespace (regex `\s` and `String.prototype.trim`): WhiteSpace ∪
+/// LineTerminator. Differs from Rust's `\s` in both directions — JS includes
+/// U+FEFF (BOM) and excludes U+0085 — so translated patterns must use this
+/// class, never `\s`, or BOM-bearing files break byte parity.
+pub const JS_WS: &str = r"\t\n\x0B\x0C\r \x{00A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}";
+
+pub fn is_js_ws(c: char) -> bool {
+    matches!(
+        c,
+        '\t' | '\n' | '\x0B' | '\x0C' | '\r' | ' '
+            | '\u{00A0}' | '\u{1680}' | '\u{2000}'..='\u{200A}'
+            | '\u{2028}' | '\u{2029}' | '\u{202F}' | '\u{205F}' | '\u{3000}' | '\u{FEFF}'
+    )
+}
+
+/// `String.prototype.trim` equivalent (JS whitespace set, not Rust's).
+pub fn js_trim(s: &str) -> &str {
+    s.trim_matches(is_js_ws)
+}
+
+static FENCE_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(&format!("^[{JS_WS}]*(```|~~~)")).unwrap());
 static INLINE_CODE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"`([^`]+)`").unwrap());
 
 /// `s.slice(0, n)` in JS counts UTF-16 code units. If the cut would split a
-/// surrogate pair we keep one unit less (a lone surrogate is unrepresentable
-/// in Rust strings — documented parity divergence, unreachable for valid text).
+/// surrogate pair we keep one unit less — JS keeps the lone high surrogate,
+/// which Rust strings cannot represent. Reachable with an astral char (emoji)
+/// straddling the boundary; documented parity divergence.
 pub fn utf16_slice(s: &str, n: usize) -> String {
     if utf16_len(s) <= n {
         return s.to_string();
@@ -87,7 +109,7 @@ pub fn excerpt_of(line: &str) -> String {
 }
 
 pub fn excerpt_of_max(line: &str, max: usize) -> String {
-    let t = line.trim();
+    let t = js_trim(line);
     if utf16_len(t) <= max {
         t.to_string()
     } else {
@@ -102,17 +124,17 @@ pub fn estimate_tokens(content: &str) -> u64 {
 }
 
 static NORM_PREFIX_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^[\s\-*+>]*(?:[0-9]+[.)])?\s*").unwrap());
+    LazyLock::new(|| Regex::new(&format!(r"^[{JS_WS}\-*+>]*(?:[0-9]+[.)])?[{JS_WS}]*")).unwrap());
 static NORM_PUNCT_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r#"[`*_~"'!?.,:;()\[\]]"#).unwrap());
-static NORM_WS_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+static NORM_WS_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(&format!("[{JS_WS}]+")).unwrap());
 
 pub fn normalize_line(line: &str) -> String {
     let s = NORM_PREFIX_RE.replace(line, "");
     let s = s.to_lowercase();
     let s = NORM_PUNCT_RE.replace_all(&s, "");
     let s = NORM_WS_RE.replace_all(&s, " ");
-    s.trim().to_string()
+    js_trim(&s).to_string()
 }
 
 pub fn word_set(s: &str) -> HashSet<String> {

@@ -1,21 +1,10 @@
 import pack from "../rules/rulepack.json";
 import { stripCommonRoot } from "./engine/parse";
 import type { AnalysisInput, RepoContext, Report, RuleMeta } from "./engine/types";
-import { renderReport, renderError } from "./ui/render";
+import { esc, renderReport, renderError, TIER_LABEL } from "./ui/render";
 import { analyze, engineReady } from "./wasmEngine";
 
 // ---- docs: rules reference rendered from the embedded rulepack ----
-
-function esc(s: string): string {
-  return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
-
-const TIER_LABEL: Record<string, string> = {
-  measured: "measured study",
-  official: "official docs",
-  community: "community",
-  heuristic: "heuristic",
-};
 
 const rules = (pack as { rules: RuleMeta[]; version: string; updated: string }).rules;
 document.getElementById("rules-list")!.innerHTML = rules
@@ -47,19 +36,17 @@ const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const dirInput = document.getElementById("dir-input") as HTMLInputElement;
 
 const INSTRUCTION_NAMES = ["CLAUDE.md", "AGENTS.md"];
-const SKIP_SEGMENTS = new Set(["node_modules", ".git", "dist", "build", ".next", "vendor", "coverage"]);
+// Must stay in lockstep with SKIP_DIRS in src/cli.ts and crates/cli — a
+// missing entry makes the playground and CLI walk different path sets for
+// the same repo (the .venv drift this line fixes).
+const SKIP_SEGMENTS = new Set(["node_modules", ".git", "dist", "build", ".next", ".venv", "vendor", "coverage"]);
 const MAX_FILES = 200_000;
 
 // Warm the engine the moment the user shows intent, so the first analysis
-// doesn't pay the module fetch.
-let warmed = false;
+// doesn't pay the module fetch. engineReady memoizes and clears itself on
+// failure, so repeated calls are free and a failed warm-up retries later.
 function warm(): void {
-  if (!warmed) {
-    warmed = true;
-    void engineReady().catch(() => {
-      warmed = false;
-    });
-  }
+  void engineReady().catch(() => {});
 }
 dropzone.addEventListener("pointerenter", warm, { once: false });
 dropzone.addEventListener("focus", warm);

@@ -16,7 +16,9 @@ jobs:
           targets: wasm32-unknown-unknown
       - run: cargo test --workspace
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo build -p aispekt-wasm --target wasm32-unknown-unknown --release
+      # wasm release build is covered by the web job (bun run build → build:wasm);
+      # a fast type-level signal here avoids paying the LTO compile twice
+      - run: cargo check -p aispekt-wasm --target wasm32-unknown-unknown
 
   web:
     runs-on: ubuntu-latest

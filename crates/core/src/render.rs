@@ -21,7 +21,14 @@ pub fn to_locale_string(n: usize) -> String {
     out
 }
 
-/// JS `Math.round`: half rounds toward +Infinity.
+/// JS `Math.round`: half rounds toward +Infinity. NOT `(x+0.5).floor()` —
+/// that rounds up for values one ULP below n+0.5 (the
+/// `Math.round(0.49999999999999994) === 0` class), where JS rounds down.
 pub fn js_round(x: f64) -> f64 {
-    (x + 0.5).floor()
+    let f = x.floor();
+    if x - f >= 0.5 {
+        f + 1.0
+    } else {
+        f
+    }
 }

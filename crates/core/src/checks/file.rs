@@ -1,4 +1,4 @@
-use crate::parse::{excerpt_of, jaccard, normalize_line, utf16_slice, word_set};
+use crate::parse::{excerpt_of, jaccard, js_trim, normalize_line, utf16_slice, word_set, JS_WS};
 use crate::types::{CheckContext, RawFinding};
 use fancy_regex::Regex as FancyRegex;
 use regex::Regex;
@@ -37,7 +37,7 @@ const VAGUE_PHRASES: [&str; 21] = [
 ];
 
 static COMMAND_TOKEN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?:^|[\s$>])(?:bun|bunx|npm|npx|yarn|pnpm|make|cargo|pytest|uv|pip3?|docker|git|wrangler|tsc|vite|eslint|ruff|prettier|go|swift|python3?|gradle|mvn|rake|mix|dotnet|\./[0-9A-Za-z_.-]+)(?-u:\b)").unwrap()
+    Regex::new(&format!(r"(?:^|[{JS_WS}$>])(?:bun|bunx|npm|npx|yarn|pnpm|make|cargo|pytest|uv|pip3?|docker|git|wrangler|tsc|vite|eslint|ruff|prettier|go|swift|python3?|gradle|mvn|rake|mix|dotnet|\./[0-9A-Za-z_.-]+)(?-u:\b)")).unwrap()
 });
 
 static SECRET_PATTERNS: LazyLock<Vec<(Regex, &'static str)>> = LazyLock::new(|| {
@@ -86,7 +86,7 @@ fn prose_lines(ctx: &CheckContext) -> Vec<(usize, &str)> {
 pub fn lint_leakage(ctx: &CheckContext) -> Vec<RawFinding> {
     let mut out = Vec::new();
     for (i, line) in prose_lines(ctx) {
-        if line.trim().is_empty() {
+        if js_trim(line).is_empty() {
             continue;
         }
         if LINT_LEAKAGE.is_match(line) {
@@ -101,13 +101,24 @@ pub fn lint_leakage(ctx: &CheckContext) -> Vec<RawFinding> {
 }
 
 static TREE_CHARS: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[├└│]").unwrap());
-static TREE_DIR: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^\s{0,8}[0-9A-Za-z_.@-]+/\s*(?:#.*)?$").unwrap());
+static TREE_DIR: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(&format!(r"^[{JS_WS}]{{0,8}}[0-9A-Za-z_.@-]+/[{JS_WS}]*(?:#.*)?$")).unwrap()
+});
 
 pub fn directory_tree(ctx: &CheckContext) -> Vec<RawFinding> {
     let mut out = Vec::new();
     let mut block_start: Option<usize> = None;
     let mut run = 0usize;
+    let flush = |run: usize, block_start: Option<usize>, out: &mut Vec<RawFinding>| {
+        if run >= 3 {
+            let bs = block_start.unwrap_or(0);
+            out.push(RawFinding::new(
+                bs + 1,
+                excerpt_of(ctx.lines.get(bs).map(|s| s.as_str()).unwrap_or("")),
+                format!("Directory-tree block of {run} lines."),
+            ));
+        }
+    };
     for (i, line) in ctx.lines.iter().enumerate() {
         let treeish = TREE_CHARS.is_match(line) || TREE_DIR.is_match(line);
         if treeish {
@@ -116,26 +127,11 @@ pub fn directory_tree(ctx: &CheckContext) -> Vec<RawFinding> {
             }
             run += 1;
         } else {
-            if run >= 3 {
-                let bs = block_start.unwrap_or(0);
-                out.push(RawFinding::new(
-                    bs + 1,
-                    excerpt_of(ctx.lines.get(bs).map(|s| s.as_str()).unwrap_or("")),
-                    format!("Directory-tree block of {run} lines."),
-                ));
-            }
+            flush(run, block_start, &mut out);
             run = 0;
         }
     }
-    if run >= 3 {
-        if let Some(bs) = block_start {
-            out.push(RawFinding::new(
-                bs + 1,
-                excerpt_of(ctx.lines.get(bs).map(|s| s.as_str()).unwrap_or("")),
-                format!("Directory-tree block of {run} lines."),
-            ));
-        }
-    }
+    flush(run, block_start, &mut out);
     out
 }
 

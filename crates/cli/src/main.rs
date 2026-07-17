@@ -18,12 +18,15 @@ fn run(args: &[String]) -> ExitCode {
             json = true;
         } else if a == "--min" {
             i += 1;
+            // JS `Number("nan")` is NaN and the TS CLI rejects it; Rust's f64
+            // parser would accept it and make `score >= NaN` always false —
+            // filter it out so both CLIs exit 2 on non-numeric input.
             let parsed = args.get(i).and_then(|v| {
                 let t = v.trim();
                 if t.is_empty() {
                     None
                 } else {
-                    t.parse::<f64>().ok()
+                    t.parse::<f64>().ok().filter(|v| !v.is_nan())
                 }
             });
             match parsed {

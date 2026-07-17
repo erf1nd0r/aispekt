@@ -105,7 +105,7 @@ pub fn build_input(target: &Path) -> Result<AnalysisInput, String> {
         .find(|f| paths.iter().any(|p| p == *f))
         .ok_or_else(|| format!("no CLAUDE.md or AGENTS.md at the root of {}", target.display()))?;
     let mut contents = ContentMap::default();
-    for name in ["CLAUDE.md", "AGENTS.md", "package.json", "README.md"] {
+    for name in INSTRUCTION_FILES.iter().chain(&["package.json", "README.md"]) {
         if paths.iter().any(|p| p == name) {
             contents.insert(name.to_string(), read_lossy(&target.join(name))?);
         }
@@ -181,5 +181,6 @@ pub fn print_human(report: &Report) -> String {
     for n in &report.agent_notes {
         let _ = writeln!(o, "  {BOLD}{}:{RESET} {}", n.agent, n.note);
     }
+    o.push('\n'); // the TS CLI ends with console.log("")
     o
 }

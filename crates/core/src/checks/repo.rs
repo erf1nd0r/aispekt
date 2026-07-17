@@ -1,36 +1,57 @@
 use crate::checks::file::redundant_with;
-use crate::parse::{excerpt_of, normalize_line, normalize_path, word_set};
+use crate::parse::{excerpt_of, js_trim, normalize_line, normalize_path, word_set, JS_WS};
 use crate::types::{CheckContext, RawFinding, RepoContext};
 use regex::Regex;
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
-/// True when the reference is present — or cannot be proven absent. Entries
-/// with a trailing "/" are unverifiable-directory markers (dirs the walker
-/// deliberately skipped, e.g. dist/, node_modules/): anything under them
-/// passes. Comparison is case-insensitive (macOS default fs). A reference
-/// that exists as a suffix of some real path (context-relative mention like
-/// `lib/route.ts` for client/src/lib/route.ts) also passes — flagging only
-/// what is confidently absent.
-fn path_exists(repo: &RepoContext, reference: &str) -> bool {
-    let p = normalize_path(reference).to_lowercase();
-    if p.is_empty() {
-        return true;
+/// Pre-normalized view of repo.paths, built once per check invocation —
+/// path_exists is O(refs × paths) and normalizing inside the loop multiplied
+/// allocations by the walk size (200k cap).
+struct NormalizedPaths(Vec<(String, bool)>);
+
+impl NormalizedPaths {
+    fn new(repo: &RepoContext) -> Self {
+        NormalizedPaths(
+            repo.paths
+                .iter()
+                .map(|existing| {
+                    (
+                        normalize_path(existing).to_lowercase(),
+                        existing.ends_with('/'),
+                    )
+                })
+                .collect(),
+        )
     }
-    for existing in &repo.paths {
-        let is_dir_marker = existing.ends_with('/');
-        let e = normalize_path(existing).to_lowercase();
-        if e == p || e.starts_with(&format!("{p}/")) {
+
+    /// True when the reference is present — or cannot be proven absent.
+    /// Entries with a trailing "/" are unverifiable-directory markers (dirs
+    /// the walker deliberately skipped, e.g. dist/, node_modules/): anything
+    /// under them passes. Comparison is case-insensitive (macOS default fs).
+    /// A reference that exists as a suffix of some real path (context-relative
+    /// mention like `lib/route.ts` for client/src/lib/route.ts) also passes —
+    /// flagging only what is confidently absent.
+    fn contains(&self, reference: &str) -> bool {
+        let p = normalize_path(reference).to_lowercase();
+        if p.is_empty() {
             return true;
         }
-        if is_dir_marker && p.starts_with(&format!("{e}/")) {
-            return true;
+        let p_slash = format!("{p}/");
+        let slash_p = format!("/{p}");
+        for (e, is_dir_marker) in &self.0 {
+            if *e == p || e.starts_with(&p_slash) {
+                return true;
+            }
+            if *is_dir_marker && p.starts_with(&format!("{e}/")) {
+                return true;
+            }
+            if e.ends_with(&slash_p) {
+                return true;
+            }
         }
-        if e.ends_with(&format!("/{p}")) {
-            return true;
-        }
+        false
     }
-    false
 }
 
 fn repo_content<'a>(repo: &'a RepoContext, name: &str) -> Option<&'a str> {
@@ -52,6 +73,11 @@ pub fn dead_command(ctx: &CheckContext) -> Vec<RawFinding> {
     let Some(pkg_raw) = repo_content(repo, "package.json") else {
         return vec![];
     };
+    // Two documented divergences from the TS oracle, both on malformed input:
+    // TS's `script in scripts` consults Object.prototype (a script literally
+    // named `toString` is never flagged there), and a non-object `"scripts"`
+    // value makes TS throw where we degrade to an empty set. Rust's behavior
+    // is the intended one; the TS quirks are bugs we chose not to port.
     let scripts: HashSet<String> = match serde_json::from_str::<serde_json::Value>(pkg_raw) {
         Ok(pkg) => pkg
             .get("scripts")
@@ -104,10 +130,11 @@ pub fn stale_path(ctx: &CheckContext) -> Vec<RawFinding> {
     if repo.paths.is_empty() || repo.truncated {
         return vec![];
     }
+    let known = NormalizedPaths::new(repo);
     let mut out = Vec::new();
     let mut reported: HashSet<String> = HashSet::new();
     for span in &ctx.code_spans {
-        let token = span.text.trim();
+        let token = js_trim(&span.text);
         // path-like: contains a slash, no spaces, no URL, no glob
         if !PATH_LIKE_RE.is_match(token) || token.contains("://") {
             continue;
@@ -132,7 +159,7 @@ pub fn stale_path(ctx: &CheckContext) -> Vec<RawFinding> {
         if reported.contains(&norm) {
             continue;
         }
-        if !path_exists(repo, &norm) {
+        if !known.contains(&norm) {
             reported.insert(norm.clone());
             out.push(RawFinding::new(
                 span.line,
@@ -236,7 +263,10 @@ pub fn bridge_missing(ctx: &CheckContext) -> Vec<RawFinding> {
 }
 
 static AT_IMPORT_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?:^|\s)@((?:[0-9A-Za-z_.-]+/)*[0-9A-Za-z_.-]+\.(?:md|json))(?-u:\b)").unwrap()
+    Regex::new(&format!(
+        r"(?:^|[{JS_WS}])@((?:[0-9A-Za-z_.-]+/)*[0-9A-Za-z_.-]+\.(?:md|json))(?-u:\b)"
+    ))
+    .unwrap()
 });
 
 pub fn import_resolution(ctx: &CheckContext) -> Vec<RawFinding> {
@@ -244,6 +274,7 @@ pub fn import_resolution(ctx: &CheckContext) -> Vec<RawFinding> {
     if repo.paths.is_empty() || repo.truncated {
         return vec![];
     }
+    let known = NormalizedPaths::new(repo);
     let mut out = Vec::new();
     let mut reported: HashSet<String> = HashSet::new();
     for i in 0..ctx.lines.len() {
@@ -260,7 +291,7 @@ pub fn import_resolution(ctx: &CheckContext) -> Vec<RawFinding> {
             if reported.contains(&norm) {
                 continue;
             }
-            if !path_exists(repo, &norm) {
+            if !known.contains(&norm) {
                 reported.insert(norm.clone());
                 out.push(RawFinding::new(
                     i + 1,

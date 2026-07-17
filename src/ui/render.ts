@@ -1,6 +1,6 @@
 import type { Report } from "../engine/types";
 
-function esc(s: string): string {
+export function esc(s: string): string {
   return s
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -8,7 +8,7 @@ function esc(s: string): string {
     .replaceAll('"', "&quot;");
 }
 
-const TIER_LABEL: Record<string, string> = {
+export const TIER_LABEL: Record<string, string> = {
   measured: "measured study",
   official: "official docs",
   community: "community",

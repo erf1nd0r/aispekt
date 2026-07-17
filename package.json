@@ -1,5 +1,5 @@
 {
-  "name": "aispekt",
+  "name": "aispekt-workspace",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -9,9 +9,7 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "cli": "bun src/cli.ts",
-    "deploy": "bun test && bun run build && bunx wrangler deploy",
-    "build:cli": "bun build src/cli.ts --target=node --outfile dist-cli/cli.js --banner '#!/usr/bin/env node'",
-    "prepublishOnly": "bun test && bun run typecheck && bun run build:cli",
+    "deploy": "bun run test:rust && bun run build && bun test && bunx wrangler deploy",
     "build:wasm": "cargo build -p aispekt-wasm --target wasm32-unknown-unknown --release && mkdir -p public && cp target/wasm32-unknown-unknown/release/aispekt_wasm.wasm public/aispekt.wasm",
     "test:rust": "cargo test --workspace"
   },
@@ -20,9 +18,6 @@
     "fast-check": "^3.19.0",
     "typescript": "^5.5.0",
     "vite": "^6.0.0"
-  },
-  "bin": {
-    "aispekt": "dist-cli/cli.js"
   },
   "description": "Evidence-cited analyzer for AGENTS.md / CLAUDE.md agent instruction files: score, findings, and what to cut - every rule backed by a research citation.",
   "keywords": [
@@ -41,11 +36,6 @@
     "url": "git+https://github.com/erf1nd0r/aispekt.git"
   },
   "homepage": "https://aispekt.erfindor.com",
-  "files": [
-    "dist-cli/",
-    "README.md",
-    "LICENSE"
-  ],
   "engines": {
     "node": ">=18"
   },

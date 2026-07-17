@@ -1,22 +1,65 @@
 //! Golden parity: the Rust engine's `--json` output must be byte-identical to
 //! the frozen TypeScript oracle (test/golden/expected/*.json, generated with
 //! `bun src/cli.ts <input> --json`). Regenerate the oracle only deliberately.
+//!
+//! The suite is driven by the expected/ directory listing, so every golden on
+//! disk is automatically covered — adding a corpus+expected pair needs no
+//! registration here, and forgetting the expected file (or the input) fails
+//! loudly instead of silently shrinking coverage.
+
+mod common;
 
 use aispekt::build_input;
 use aispekt_core::{analyze, report_to_json_pretty};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-fn assert_golden(input_rel: &str, golden_name: &str) {
+/// Resolve a golden name to its input path. Repo-mode goldens map either to a
+/// committed corpus repo or to a hermetic builder (mirroring the Bun suite's
+/// runtime fixtures, which are deliberately not in git).
+fn input_for(name: &str) -> Option<PathBuf> {
     let root = repo_root();
-    let input = build_input(&root.join(input_rel)).expect("build_input");
+    match name {
+        "repo-repo" => Some(common::make_repo_fixture()),
+        "repo-symlink-repo" => {
+            #[cfg(unix)]
+            {
+                Some(common::make_symlink_repo())
+            }
+            #[cfg(not(unix))]
+            {
+                None // symlink creation needs privileges on Windows
+            }
+        }
+        _ => {
+            if let Some(repo) = name.strip_prefix("repo-") {
+                // goldens are repo-<x>.json; corpus dirs are <x>-repo/
+                let direct = root.join("test/golden/corpus").join(repo);
+                if direct.exists() {
+                    return Some(direct);
+                }
+                return Some(root.join("test/golden/corpus").join(format!("{repo}-repo")));
+            }
+            let corpus = root.join("test/golden/corpus").join(format!("{name}.md"));
+            if corpus.exists() {
+                return Some(corpus);
+            }
+            Some(root.join("test/fixtures").join(format!("{name}.md")))
+        }
+    }
+}
+
+fn assert_golden_at(input_path: &Path, golden_path: &Path) {
+    let name = golden_path.file_name().unwrap().to_string_lossy();
+    let input = build_input(input_path)
+        .unwrap_or_else(|e| panic!("build_input for golden {name}: {e}"));
     let report = analyze(&input);
     let actual = format!("{}\n", report_to_json_pretty(&report));
-    let golden_path = root.join("test/golden/expected").join(golden_name);
-    let expected = std::fs::read_to_string(&golden_path).expect("golden file");
+    let expected = std::fs::read_to_string(golden_path)
+        .unwrap_or_else(|e| panic!("read golden {name}: {e}"));
     if actual != expected {
         // Byte-level context makes regex/rounding divergences findable fast.
         let mismatch = actual
@@ -26,40 +69,38 @@ fn assert_golden(input_rel: &str, golden_name: &str) {
             .find(|(_, (a, e))| a != e);
         if let Some((idx, (a, e))) = mismatch {
             panic!(
-                "golden mismatch for {golden_name} at line {}:\n  rust: {a}\n  ts:   {e}",
+                "golden mismatch for {name} at line {}:\n  rust: {a}\n  ts:   {e}",
                 idx + 1
             );
         }
         panic!(
-            "golden mismatch for {golden_name}: line counts differ (rust {}, ts {})",
+            "golden mismatch for {name}: line counts differ (rust {}, ts {})",
             actual.lines().count(),
             expected.lines().count()
         );
     }
 }
 
-macro_rules! golden_file {
-    ($name:ident, $input:expr, $golden:expr) => {
-        #[test]
-        fn $name() {
-            assert_golden($input, $golden);
+#[test]
+fn every_golden_on_disk_matches() {
+    let expected_dir = repo_root().join("test/golden/expected");
+    let mut entries: Vec<PathBuf> = std::fs::read_dir(&expected_dir)
+        .expect("list test/golden/expected")
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .collect();
+    entries.sort();
+    assert!(
+        entries.len() >= 17,
+        "golden corpus shrank: only {} expected files found",
+        entries.len()
+    );
+    for golden_path in entries {
+        let name = golden_path.file_stem().unwrap().to_string_lossy().to_string();
+        match input_for(&name) {
+            Some(input) => assert_golden_at(&input, &golden_path),
+            None => eprintln!("skipping {name}: unsupported on this platform"),
         }
-    };
+    }
 }
-
-golden_file!(good, "test/fixtures/good.md", "good.json");
-golden_file!(bad, "test/fixtures/bad.md", "bad.json");
-golden_file!(contradictions, "test/golden/corpus/contradictions.md", "contradictions.json");
-golden_file!(emphasis, "test/golden/corpus/emphasis.md", "emphasis.json");
-golden_file!(empty, "test/golden/corpus/empty.md", "empty.json");
-golden_file!(hugefile, "test/golden/corpus/hugefile.md", "hugefile.json");
-golden_file!(longfile, "test/golden/corpus/longfile.md", "longfile.json");
-golden_file!(minimal, "test/golden/corpus/minimal.md", "minimal.json");
-golden_file!(secrets, "test/golden/corpus/secrets.md", "secrets.json");
-golden_file!(unicode, "test/golden/corpus/unicode.md", "unicode.json");
-golden_file!(vague, "test/golden/corpus/vague.md", "vague.json");
-golden_file!(ignores, "test/golden/corpus/ignores.md", "ignores.json");
-golden_file!(repo_fixture, "test/fixtures/repo", "repo-repo.json");
-golden_file!(repo_symlink, "test/fixtures/symlink-repo", "repo-symlink-repo.json");
-golden_file!(repo_bridge, "test/golden/corpus/bridge-repo", "repo-bridge.json");
-golden_file!(repo_drift, "test/golden/corpus/drift-repo", "repo-drift.json");

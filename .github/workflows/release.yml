@@ -31,9 +31,10 @@ jobs:
           targets: ${{ matrix.target }}
       - if: startsWith(matrix.slug, 'linux')
         run: sudo apt-get update && sudo apt-get install -y musl-tools
+      # --release for both: tests reuse the build's artifacts (no second
+      # debug compile) and exercise the exact optimization profile shipped.
       - run: cargo build --release -p aispekt --target ${{ matrix.target }}
-      - run: cargo test -p aispekt --target ${{ matrix.target }}
-        if: matrix.slug != 'linux-arm64' # cross-runner parity already covered by native runners
+      - run: cargo test --release -p aispekt --target ${{ matrix.target }}
       - name: Stage binary
         shell: bash
         run: |
@@ -46,7 +47,7 @@ jobs:
           path: stage/*
 
   publish:
-    needs: build
+    needs: [build, ci] # ci must gate publishing — a red workspace must never reach the registry
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,11 +58,21 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Version sanity — tag must match npm wrapper version
+      - name: Version sanity — tag must match every pinned version
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           PKG=$(node -p "require('./npm/aispekt/package.json').version")
           [ "$TAG" = "$PKG" ] || { echo "tag v$TAG != npm/aispekt version $PKG"; exit 1; }
+          # every optionalDependencies pin must equal the tag, or the wrapper
+          # silently resolves last release's binaries
+          node -e '
+            const p = require("./npm/aispekt/package.json");
+            const tag = process.argv[1];
+            const bad = Object.entries(p.optionalDependencies).filter(([, v]) => v !== tag);
+            if (bad.length) { console.error("stale optionalDependencies pins:", bad); process.exit(1); }
+          ' "$TAG"
+          CARGO=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)"/\1/')
+          [ "$TAG" = "$CARGO" ] || { echo "tag v$TAG != Cargo workspace version $CARGO (aispekt --version would lie)"; exit 1; }
       - name: Assemble platform packages
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -69,15 +80,29 @@ jobs:
             node npm/make-platform-package.mjs "$slug" "artifacts/bin-$slug/aispekt" "$VERSION" out
           done
           node npm/make-platform-package.mjs win32-x64 artifacts/bin-win32-x64/aispekt.exe "$VERSION" out
-      - name: Publish platform packages
+      - name: Publish platform packages (idempotent — reruns skip published versions)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          for d in out/aispekt-*; do (cd "$d" && npm publish --provenance --access public); done
-      - name: Publish wrapper
+          VERSION="${GITHUB_REF_NAME#v}"
+          for d in out/aispekt-*; do
+            PKG=$(basename "$d")
+            if npm view "$PKG@$VERSION" version >/dev/null 2>&1; then
+              echo "$PKG@$VERSION already on the registry — skipping"
+            else
+              (cd "$d" && npm publish --provenance --access public)
+            fi
+          done
+      - name: Publish wrapper (idempotent)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: cd npm/aispekt && npm publish --provenance --access public
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if npm view "aispekt@$VERSION" version >/dev/null 2>&1; then
+            echo "aispekt@$VERSION already on the registry — skipping"
+          else
+            cd npm/aispekt && npm publish --provenance --access public
+          fi
       - name: Attach binaries to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -88,11 +113,11 @@ jobs:
             tar -C "artifacts/bin-$slug" -czf "release/aispekt-$VERSION-$slug.tar.gz" aispekt
           done
           (cd artifacts/bin-win32-x64 && zip -q "../../release/aispekt-$VERSION-win32-x64.zip" aispekt.exe)
-          gh release create "$VERSION" --generate-notes release/* || gh release upload "$VERSION" release/*
+          gh release create "$VERSION" --generate-notes release/* || gh release upload "$VERSION" release/* --clobber
 
   ci:
-    # Plain-commit safety net lives in ci.yml; this job only exists so tag
-    # builds fail loudly when the workspace itself is broken.
+    # Full-workspace gate for tag builds — publish depends on this job, so a
+    # red workspace (clippy included) blocks the registry push.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
