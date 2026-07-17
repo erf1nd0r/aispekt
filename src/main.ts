@@ -1,3 +1,7 @@
+import "@fontsource/jetbrains-mono/400.css";
+import "@fontsource/jetbrains-mono/700.css";
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/600.css";
 import pack from "../rules/rulepack.json";
 import { stripCommonRoot } from "./engine/parse";
 import type { AnalysisInput, RepoContext, Report, RuleMeta } from "./engine/types";
@@ -10,7 +14,7 @@ const rules = (pack as { rules: RuleMeta[]; version: string; updated: string }).
 document.getElementById("rules-list")!.innerHTML = rules
   .map(
     (r) => `
-  <article class="rule-row sev-${r.severity}">
+  <article class="rule-row sev-${r.severity} tier-${r.evidenceTier}">
     <div class="head">
       <span class="sev">${r.severity}</span>
       <span class="rule">${esc(r.name)}</span>
@@ -27,6 +31,139 @@ document.getElementById("rules-list")!.innerHTML = rules
 
 document.getElementById("footer-pack")!.textContent =
   `rulepack v${pack.version} · evidence verified ${pack.updated} · ${rules.length} rules`;
+
+// ---- confidence ladder: ranked tier legend that filters the rules ----
+
+const TIER_ORDER = ["measured", "official", "community", "heuristic"] as const;
+const ladder = document.getElementById("tier-ladder")!;
+ladder.innerHTML =
+  `<span class="ladder-title">evidence confidence</span>` +
+  TIER_ORDER.map((t) => {
+    const count = rules.filter((r) => r.evidenceTier === t).length;
+    return `<button class="ladder-step ${t}" data-tier="${t}" aria-pressed="false">
+      <span class="tier ${t}">${TIER_LABEL[t]}</span><span class="ladder-count">${count}</span>
+    </button>`;
+  }).join("");
+
+let activeTier: string | null = null;
+ladder.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(".ladder-step");
+  if (!btn) return;
+  activeTier = activeTier === btn.dataset["tier"] ? null : (btn.dataset["tier"] ?? null);
+  for (const b of ladder.querySelectorAll<HTMLButtonElement>(".ladder-step")) {
+    b.setAttribute("aria-pressed", String(b.dataset["tier"] === activeTier));
+  }
+  for (const row of document.querySelectorAll<HTMLElement>("#rules-list .rule-row")) {
+    row.hidden = activeTier !== null && !row.classList.contains(`tier-${activeTier}`);
+  }
+});
+
+// ---- scrollspy: highlight the section under the viewport in the rail ----
+
+const tocLinks = new Map<string, HTMLAnchorElement>();
+for (const a of document.querySelectorAll<HTMLAnchorElement>("#toc a[href^='#']")) {
+  tocLinks.set(a.getAttribute("href")!.slice(1), a);
+}
+const spy = new IntersectionObserver(
+  (entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        for (const a of tocLinks.values()) a.classList.remove("active");
+        tocLinks.get(entry.target.id)?.classList.add("active");
+      }
+    }
+  },
+  { rootMargin: "-20% 0px -70% 0px" },
+);
+for (const id of tocLinks.keys()) {
+  const section = document.getElementById(id);
+  if (section) spy.observe(section);
+}
+
+// ---- live-scoring hero: the real engine scoring a bloated sample on load ----
+
+const HERO_SAMPLE = [
+  "# My project",
+  "",
+  "Always write clean code and follow best practices.",
+  "Use 2 spaces for indentation and single quotes everywhere.",
+  "IMPORTANT: YOU MUST be careful. CRITICAL: stay focused.",
+  "IMPORTANT: YOU MUST double-check. CRITICAL: NEVER EVER guess.",
+  "src/",
+  "  components/",
+  "  utils/",
+  "Handle errors appropriately, as needed.",
+].join("\n");
+
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+async function initHeroDemo(): Promise<void> {
+  const demo = document.getElementById("hero-demo")!;
+  const fileEl = document.getElementById("hero-file")!;
+  const scoreEl = document.getElementById("hero-score")!;
+  const gradeEl = document.getElementById("hero-grade")!;
+  let report: Report;
+  try {
+    report = await analyze({ fileName: "CLAUDE.md", content: HERO_SAMPLE });
+  } catch {
+    return; // engine unavailable — the hero stays prose-only, docs unaffected
+  }
+  const lines = HERO_SAMPLE.split("\n");
+  fileEl.innerHTML = lines
+    .map(
+      (l, i) =>
+        `<div class="hero-line" data-line="${i + 1}"><span class="hero-ln">${i + 1}</span>${esc(l) || "&nbsp;"}</div>`,
+    )
+    .join("");
+  demo.hidden = false;
+
+  const finish = () => {
+    scoreEl.textContent = String(report.score);
+    gradeEl.textContent = `grade ${report.grade}`;
+    demo.classList.add(`grade-${report.grade}`);
+    for (const f of report.findings) {
+      fileEl.querySelector(`[data-line="${f.line}"]`)?.classList.add("flagged");
+    }
+  };
+  if (REDUCED_MOTION) {
+    finish();
+    return;
+  }
+  // deduct penalties one at a time: tick the number down, flash the line
+  const steps = report.findings.map((f) => ({ line: f.line }));
+  const total = 100 - report.score;
+  let shown = 100;
+  let i = 0;
+  const tick = () => {
+    if (i >= steps.length) {
+      finish();
+      return;
+    }
+    const target = 100 - Math.round((total * (i + 1)) / steps.length);
+    const line = fileEl.querySelector(`[data-line="${steps[i]!.line}"]`);
+    line?.classList.add("flash");
+    setTimeout(() => {
+      line?.classList.remove("flash");
+      line?.classList.add("flagged");
+    }, 340);
+    const countDown = () => {
+      if (shown > target) {
+        shown--;
+        scoreEl.textContent = String(shown);
+        requestAnimationFrame(countDown);
+      } else {
+        i++;
+        setTimeout(tick, 240);
+      }
+    };
+    countDown();
+  };
+  setTimeout(tick, 500);
+}
+
+void engineReady()
+  .then(() => initHeroDemo())
+  .catch(() => {});
 
 // ---- playground: same walk plumbing as always, engine now WASM ----
 
@@ -61,7 +198,7 @@ function fail(message: string): void {
 }
 
 function pending(): void {
-  results.innerHTML = `<div class="clean">Analyzing…</div>`;
+  results.innerHTML = `<div class="clean analyzing"><span class="sweep" aria-hidden="true"></span>Analyzing…</div>`;
 }
 
 async function runAnalysis(input: AnalysisInput): Promise<void> {

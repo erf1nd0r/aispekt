@@ -22,7 +22,7 @@
   <body>
     <div class="wrap">
       <header class="hero">
-        <h1><span class="scissors">🔍</span> aispekt</h1>
+        <h1>aispekt</h1>
         <p class="tag">
           Is your <strong>AGENTS.md / CLAUDE.md</strong> helping your coding agent — or silently
           taxing it? aispekt is a fast CLI that scores your agent instruction file against
@@ -30,15 +30,35 @@
           official doc behind every finding.
         </p>
         <pre class="quickstart"><code>bunx aispekt .        <span class="c"># or: npx aispekt .</span></code></pre>
-        <nav class="toc">
+        <div class="hero-demo" id="hero-demo" hidden>
+          <div class="hero-file" id="hero-file" aria-hidden="true"></div>
+          <div class="hero-verdict">
+            <div class="hero-scorebox">
+              <span class="hero-score" id="hero-score">100</span>
+              <span class="hero-grade" id="hero-grade"></span>
+            </div>
+            <p class="hero-caption">
+              the real engine scoring a bloated sample — live, in your browser.
+              <a href="#playground">Try yours ↓</a>
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <div class="layout">
+      <aside class="rail">
+        <nav class="toc" id="toc">
           <a href="#install">Install</a>
           <a href="#usage">Usage</a>
+          <a href="#scoring">Scoring</a>
           <a href="#rules">Rules</a>
           <a href="#playground">Playground</a>
           <a href="https://github.com/erf1nd0r/aispekt" rel="noopener">GitHub</a>
           <a href="https://www.npmjs.com/package/aispekt" rel="noopener">npm</a>
         </nav>
-      </header>
+        <div class="tier-ladder" id="tier-ladder" aria-label="Evidence confidence tiers, strongest first"></div>
+      </aside>
+      <main class="content">
 
       <section class="doc" id="install">
         <h2>Install</h2>
@@ -155,6 +175,8 @@ bunx aispekt . --min 75</code></pre>
         <span id="footer-pack"></span>
         <span>analysis is deterministic and local · <a href="https://www.npmjs.com/package/aispekt" rel="noopener">npm</a> · <a href="https://github.com/erf1nd0r/aispekt" rel="noopener">github</a> · MIT</span>
       </footer>
+      </main>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
