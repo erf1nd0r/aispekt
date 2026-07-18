@@ -146,16 +146,44 @@ fn run_skill(args: &[String]) -> ExitCode {
             }
             let dir = root.join("aispekt-judge");
             let dest = dir.join("SKILL.md");
-            if let Ok(existing) = fs::read_to_string(&dest) {
-                if existing == SKILL_MD {
-                    eprintln!("aispekt: skill already installed at {} (up to date)", dest.display());
-                    return ExitCode::from(0);
-                }
-                if !force {
+            // Clobber guard: byte-compare, refuse symlinks outright (fs::write
+            // follows them), and treat any read error other than "not found"
+            // as a refusal — never overwrite what we couldn't inspect.
+            match fs::symlink_metadata(&dest) {
+                Ok(meta) if meta.file_type().is_symlink() => {
                     eprintln!(
-                        "aispekt: {} exists and differs from this version — re-run with --force to overwrite",
+                        "aispekt: {} is a symlink — refusing to write through it; remove it manually first",
                         dest.display()
                     );
+                    return ExitCode::from(2);
+                }
+                Ok(_) => match fs::read(&dest) {
+                    Ok(bytes) if bytes == SKILL_MD.as_bytes() => {
+                        eprintln!(
+                            "aispekt: skill already installed at {} (up to date)",
+                            dest.display()
+                        );
+                        return ExitCode::from(0);
+                    }
+                    Ok(_) if !force => {
+                        eprintln!(
+                            "aispekt: {} exists and differs from this version — re-run with --force to overwrite",
+                            dest.display()
+                        );
+                        return ExitCode::from(2);
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        eprintln!(
+                            "aispekt: cannot inspect existing {}: {e} — refusing to overwrite",
+                            dest.display()
+                        );
+                        return ExitCode::from(2);
+                    }
+                },
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                Err(e) => {
+                    eprintln!("aispekt: cannot inspect {}: {e}", dest.display());
                     return ExitCode::from(2);
                 }
             }
