@@ -238,7 +238,7 @@ fn adversarial_answers_never_move_the_deterministic_score() {
         let findings: Vec<Value> = (0..n)
             .map(|k| {
                 json!({
-                    "lines": [1 + (k as u64), 2 + (k as u64)],
+                    "lines": [1 + k, 2 + k],
                     "quote": format!("q{seed:x}{k}"),
                     "rationale": format!("r{seed:x}"),
                     "confidence": conf,

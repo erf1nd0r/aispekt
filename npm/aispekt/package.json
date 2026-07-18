@@ -1,6 +1,6 @@
 {
   "name": "aispekt",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Evidence-cited analyzer for AGENTS.md / CLAUDE.md agent instruction files: score, findings, and what to cut - every rule backed by a research citation. Native Rust binary.",
   "keywords": [
     "agents.md",
@@ -29,10 +29,10 @@
     "node": ">=18"
   },
   "optionalDependencies": {
-    "@aispekt/darwin-arm64": "0.2.2",
-    "@aispekt/darwin-x64": "0.2.2",
-    "@aispekt/linux-x64": "0.2.2",
-    "@aispekt/linux-arm64": "0.2.2",
-    "@aispekt/win32-x64": "0.2.2"
+    "@aispekt/darwin-arm64": "0.3.0",
+    "@aispekt/darwin-x64": "0.3.0",
+    "@aispekt/linux-x64": "0.3.0",
+    "@aispekt/linux-arm64": "0.3.0",
+    "@aispekt/win32-x64": "0.3.0"
   }
 }

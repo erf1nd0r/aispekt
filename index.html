@@ -50,6 +50,7 @@
         <nav class="toc" id="toc">
           <a href="#install">Install</a>
           <a href="#usage">Usage</a>
+          <a href="#judge">Judge</a>
           <a href="#scoring">Scoring</a>
           <a href="#rules">Rules</a>
           <a href="#playground">Playground</a>
@@ -112,6 +113,37 @@ bunx aispekt . --min 75</code></pre>
           False positive on a heuristic? Suppress a single finding with an
           <code>aispekt-ignore</code> marker on the flagged line or the line above —
           like <code>eslint-disable-next-line</code>.
+        </p>
+      </section>
+
+      <section class="doc" id="judge">
+        <h2>Semantic judge — bring your own agent</h2>
+        <p>
+          Some questions no regex can answer: <em>is this rule dead weight for a strong
+          model? Do two instructions semantically contradict?</em> aispekt ships that layer
+          without asking for an API key — <strong>the judge is whatever AI agent you
+          already run</strong>.
+        </p>
+        <pre><code>aispekt judge emit AGENTS.md --out brief.json
+<span class="c"># any judge completes the brief: an agent, a BYOK script, a human</span>
+aispekt judge merge brief.json answers.json</code></pre>
+        <p>
+          The brief is self-contained JSON: the file content, one task per semantic check
+          (each with its evidence citation), and the exact answer contract.
+          For agent users it's one command — <code>aispekt skill install</code> drops an
+          <a href="https://github.com/erf1nd0r/aispekt/blob/main/skills/aispekt-judge/SKILL.md" rel="noopener">Agent
+          Skill</a> (the open <code>SKILL.md</code> standard read by Claude Code, Codex CLI,
+          Cursor, Gemini CLI, and more) into <code>.claude/skills/</code>; then
+          <em>"judge this file with aispekt"</em> runs the loop with your agent as judge.
+        </p>
+        <p>
+          The honesty rules are structural: answers are hash-bound to the exact content
+          judged, validated for verbatim quotes and real line numbers, and rendered as a
+          separate judge-labeled tier with a non-determinism caveat —
+          <strong>semantic verdicts can never move the deterministic score</strong>.
+          Judge checks live in
+          <a href="https://github.com/erf1nd0r/aispekt/blob/main/rules/judgepack.json" rel="noopener"><code>rules/judgepack.json</code></a>,
+          same doctrine as the rulepack: adding one is a data edit.
         </p>
       </section>
 
