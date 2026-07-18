@@ -1,0 +1,47 @@
+{
+  "version": "0.1.0",
+  "protocol": "aispekt-judge/1",
+  "updated": "2026-07-18",
+  "checks": [
+    {
+      "id": "dead-weight",
+      "name": "Dead weight for a strong model",
+      "question": "Which instructions would a capable coding agent follow identically even if they were deleted? Flag lines that restate default agent behavior, describe what the code already makes obvious, or choreograph reasoning steps a strong model performs unprompted.",
+      "guidance": "The test is counterfactual: imagine the agent without this line. Generic advice (\"write clean code\", \"think carefully\"), restated tool defaults, and step-by-step reasoning choreography are dead weight. Exact commands, non-obvious gotchas, safety gates, and output-format contracts are NOT dead weight — never flag those four classes.",
+      "evidenceTier": "heuristic",
+      "evidenceUrl": "https://arxiv.org/abs/2602.11988",
+      "lastVerified": "2026-07-18",
+      "scope": "file"
+    },
+    {
+      "id": "vague-intent",
+      "name": "Vague intent (semantic)",
+      "question": "Which instructions cannot be executed without guessing what the author meant? For each, name the guess two reasonable agents would make differently.",
+      "guidance": "The deterministic vague-rules check catches pattern-matched aspirational lines; you catch the semantic remainder: undefined terms (\"significant changes\", \"important files\"), unstated thresholds, and references to knowledge the file never provides. A rule is vague when two competent agents would honestly do different things.",
+      "evidenceTier": "official",
+      "evidenceUrl": "https://code.claude.com/docs/en/best-practices",
+      "lastVerified": "2026-07-18",
+      "scope": "file"
+    },
+    {
+      "id": "semantic-contradiction",
+      "name": "Semantic contradiction",
+      "question": "Do any two instructions conflict such that fully following one violates the other?",
+      "guidance": "The deterministic engine already catches lexical conflicts (tabs vs spaces, mixed package managers). You catch the semantic layer: conditional rules whose conditions overlap incompatibly, a \"never X\" plus a workflow that requires X, section-scoped rules that contradict globals. Quote both sides of every conflict.",
+      "evidenceTier": "official",
+      "evidenceUrl": "https://code.claude.com/docs/en/memory",
+      "lastVerified": "2026-07-18",
+      "scope": "file"
+    },
+    {
+      "id": "stale-guidance",
+      "name": "Stale guidance (semantic)",
+      "question": "Given the repo file list, which instructions appear outdated — referencing tools, workflows, or structures the repo no longer uses?",
+      "guidance": "The deterministic engine flags dead commands and missing paths exactly; you catch the semantic tail: guidance about a framework the file list shows was migrated away from, build steps superseded by CI config visible in the list, conventions contradicted by the dominant file patterns. Only flag on positive evidence in the file list — absence of evidence is not staleness.",
+      "evidenceTier": "community",
+      "evidenceUrl": "https://github.com/giacomo/agents-lint",
+      "lastVerified": "2026-07-18",
+      "scope": "repo"
+    }
+  ]
+}

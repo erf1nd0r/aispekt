@@ -110,9 +110,25 @@ Browse the full rule table, rendered live from the rulepack, at [aispekt.erfindo
 
 Calibration is regression-tested: known-good and known-bad fixtures pin score bounds, and property tests guarantee scoring stays penalty-only — appending bloat can never raise a score.
 
+## Semantic judge — bring your own agent
+
+Some questions no regex can answer: *is this rule dead weight for a strong model? Do two instructions semantically contradict?* aispekt ships that layer without asking for an API key — the judge is whatever AI agent you already run.
+
+The seam is a file protocol:
+
+```sh
+aispekt judge emit AGENTS.md --out brief.json   # deterministic score + judge tasks, self-contained
+# any judge completes the brief: an agent, a BYOK script, a human
+aispekt judge merge brief.json answers.json     # validates the answers, renders the semantic report
+```
+
+For agent users it's one command: `aispekt skill install` drops an Agent Skill — the open `SKILL.md` standard read by Claude Code, Codex CLI, Cursor, Gemini CLI, and more — into `.claude/skills/`. After that, asking your agent to "judge this file with aispekt" runs the emit→answer→merge loop with the agent itself as judge. The skill ships in this repo at [`skills/aispekt-judge/SKILL.md`](skills/aispekt-judge/SKILL.md); `aispekt skill print` shows it without installing.
+
+The honesty rules are structural, not aspirational: answers are hash-bound to the exact content judged, validated for verbatim quotes and real line numbers, and rendered as a separate judge-labeled tier with a non-determinism caveat — semantic verdicts can never move the deterministic score. Judge checks live in [`rules/judgepack.json`](rules/judgepack.json) under the same doctrine as the rulepack: adding one is a data edit, and each carries its evidence citation. Running in CI without an agent? The brief is plain JSON — point any LLM at it, write the answers file, and merge validates it the same way regardless of who judged.
+
 ## Roadmap (v2 candidates)
 
-- LLM-judge layer (bring-your-own-key) for semantic checks: "is this rule dead weight for a strong model?"
+- More judge adapters over the brief protocol: an MCP server, and `judge --auto` shelling out to installed agent CLIs.
 - Behavioral A/B tier: run an agent on sample tasks with/without the file — the only ground-truth measurement.
 - Rulepack fetched from a registry at runtime (Semgrep-style) instead of bundled.
 

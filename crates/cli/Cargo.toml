@@ -12,6 +12,4 @@ path = "src/main.rs"
 
 [dependencies]
 aispekt-core = { path = "../core" }
-
-[dev-dependencies]
 serde_json = { workspace = true }

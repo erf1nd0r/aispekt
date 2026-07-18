@@ -12,6 +12,7 @@ pub mod checks {
     pub mod file;
     pub mod repo;
 }
+pub mod judge;
 pub mod parse;
 pub mod render;
 pub mod rulepack;
