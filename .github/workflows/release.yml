@@ -2,7 +2,11 @@
 # attach binaries to the GitHub release. Triggered ONLY by a v* tag push —
 # nothing here runs on ordinary commits.
 #
-# Required repo secret: NPM_TOKEN (automation token with publish rights).
+# npm auth is OIDC trusted publishing (no token): every package's Trusted
+# Publisher points at this workflow file, `id-token: write` grants the OIDC
+# token, and npm >= 11.5.1 performs the exchange. The v0.3.0 run proved the
+# old NODE_AUTH_TOKEN path shadowed OIDC (the CLI prefers an explicit token),
+# so no token env may ever be reintroduced here.
 name: release
 
 on:
@@ -86,8 +90,6 @@ jobs:
           done
           node npm/make-platform-package.mjs win32-x64 artifacts/bin-win32-x64/aispekt.exe "$VERSION" out
       - name: Publish platform packages (idempotent — reruns skip published versions)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           for d in out/aispekt-*; do
@@ -101,8 +103,6 @@ jobs:
             fi
           done
       - name: Publish wrapper (idempotent)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           if npm view "aispekt@$VERSION" version >/dev/null 2>&1; then
